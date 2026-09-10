@@ -19,6 +19,11 @@ import com.aldo.event_pass.dto.auth.RegistroRequest;
 import com.aldo.event_pass.dto.auth.RegistroResponse;
 import com.aldo.event_pass.entity.RefreshToken;
 import com.aldo.event_pass.entity.Usuario;
+import com.aldo.event_pass.exception.EmailExistenteException;
+import com.aldo.event_pass.exception.RefreshTokenExpiradoException;
+import com.aldo.event_pass.exception.RefreshTokenNoEncontradoException;
+import com.aldo.event_pass.exception.RefreshTokenNoValidoException;
+import com.aldo.event_pass.exception.UsuarioNoEncontradoException;
 import com.aldo.event_pass.mapper.LoginMapper;
 import com.aldo.event_pass.mapper.RegistroMapper;
 import com.aldo.event_pass.repository.RefreshTokenRepository;
@@ -45,7 +50,7 @@ public class AuthServiceImpl implements AuthService {
     public RegistroResponse registro(RegistroRequest registroRequest) {
 
         if(usuarioRepository.findByEmail(registroRequest.getEmail()).isPresent()){
-            throw new RuntimeException("Este usuario ya existe");
+            throw new EmailExistenteException(registroRequest.getEmail());
         }
 
         Usuario usuario = RegistroMapper.toEntity(registroRequest);
@@ -69,7 +74,7 @@ public class AuthServiceImpl implements AuthService {
         String refreshToken = jwtService.generateRefreshToken(userDetails);
 
         Usuario usuario = usuarioRepository.findByEmail(loginRequest.getEmail())
-            .orElseThrow(() -> new RuntimeException());
+            .orElseThrow(() -> new UsuarioNoEncontradoException());
 
         RefreshToken refreshTokenEntity = RefreshToken.builder()
             .token(refreshToken)
@@ -86,11 +91,11 @@ public class AuthServiceImpl implements AuthService {
     public LoginResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
         
         RefreshToken refreshTokenEntity = refreshTokenRepository.findByToken(refreshTokenRequest.getRefreshToken())
-            .orElseThrow(() -> new RuntimeException());
+            .orElseThrow(() -> new RefreshTokenNoEncontradoException());
 
         if(refreshTokenEntity.getExpirationDate().isBefore(LocalDateTime.now())){
             refreshTokenRepository.deleteByToken(refreshTokenRequest.getRefreshToken());
-            throw new RuntimeException();
+            throw new RefreshTokenExpiradoException();
         }
 
         Usuario usuario = refreshTokenEntity.getUsuario();
@@ -99,7 +104,7 @@ public class AuthServiceImpl implements AuthService {
         UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
         if(!jwtService.isValid(refreshTokenRequest.getRefreshToken(), userDetails)){
-            throw new RuntimeException();
+            throw new RefreshTokenNoValidoException();
         }
 
         String nuevoAccesToken = jwtService.generateAccessToken(userDetails);
@@ -112,7 +117,7 @@ public class AuthServiceImpl implements AuthService {
     public String logout(LogoutRequest logoutRequest) {
 
         if(!refreshTokenRepository.findByToken(logoutRequest.getRefreshToken()).isPresent()){
-            throw new RuntimeException();
+            throw new RefreshTokenNoEncontradoException();
         }
 
         refreshTokenRepository.deleteByToken(logoutRequest.getRefreshToken());
