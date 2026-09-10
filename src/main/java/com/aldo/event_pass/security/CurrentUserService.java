@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.aldo.event_pass.entity.Usuario;
 import com.aldo.event_pass.repository.UsuarioRepository;
+import com.aldo.event_pass.exception.UsuarioNoEncontradoException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,6 +21,6 @@ public class CurrentUserService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
 
-        return usuarioRepository.findByEmail(email).orElseThrow(() -> new RuntimeException());
+        return usuarioRepository.findByEmail(email).orElseThrow(() -> new UsuarioNoEncontradoException());
     }
 }
