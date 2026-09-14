@@ -32,6 +32,7 @@ public class securityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/registro", "/auth/login").permitAll()
                         .requestMatchers("/auth/refresh-token", "/auth/logout", "/auth/me").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/admin/evento/crear", "/admin/evento/{eventoId}/agregar-tipo-boleto", "/admin/evento/{eventoId}/publicar").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
