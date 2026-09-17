@@ -4,11 +4,13 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.aldo.event_pass.dto.pago.PagoResponse;
 import com.aldo.event_pass.dto.reservacion.BoletoReservaRequest;
 import com.aldo.event_pass.dto.reservacion.ReservaResponse;
 import com.aldo.event_pass.dto.reservacion.ReservarBoletosRequest;
@@ -16,14 +18,17 @@ import com.aldo.event_pass.entity.Boleto;
 import com.aldo.event_pass.entity.Compra;
 import com.aldo.event_pass.entity.DetalleCompra;
 import com.aldo.event_pass.entity.Evento;
+import com.aldo.event_pass.entity.Pago;
 import com.aldo.event_pass.entity.TipoBoleto;
 import com.aldo.event_pass.entity.Usuario;
 import com.aldo.event_pass.enums.EstadoCompra;
 import com.aldo.event_pass.enums.EstadoEvento;
+import com.aldo.event_pass.enums.EstadoPago;
 import com.aldo.event_pass.repository.BoletoRepository;
 import com.aldo.event_pass.repository.CompraRepository;
 import com.aldo.event_pass.repository.DetalleCompraRepository;
 import com.aldo.event_pass.repository.EventoRepository;
+import com.aldo.event_pass.repository.PagoRepository;
 import com.aldo.event_pass.repository.TipoBoletoRepository;
 import com.aldo.event_pass.security.CurrentUserService;
 import com.aldo.event_pass.service.interfaces.CompraService;
@@ -40,6 +45,7 @@ public class CompraServiceImpl implements CompraService {
     private final TipoBoletoRepository tipoBoletoRepository;
     private final DetalleCompraRepository detalleCompraRepository;
     private final CompraRepository compraRepository;
+    private final PagoRepository pagoRepository;
 
     @Override
     @Transactional 
@@ -160,6 +166,42 @@ public class CompraServiceImpl implements CompraService {
             guardada.getTotal(),
             guardada.getFechaExpiracionReserva()
         );
+    }
+
+    @Override
+    @Transactional
+    public PagoResponse pagar(Long compraRId) {
+
+        Usuario usuario = currentUserService.obtenerUsuarioActual();
+
+        Compra compraR = compraRepository.findByIdAndUsuarioId(compraRId, usuario.getId())
+            .orElseThrow(() -> new RuntimeException("Compra no encontrada"));
+
+        if(compraR.getEstado() != EstadoCompra.RESERVADA){
+            throw new RuntimeException("La compra no está reservada");
+        }
+
+        if(compraR.getFechaExpiracionReserva().isBefore(LocalDateTime.now())){
+            throw new RuntimeException("La reserva expiró");
+        }
+
+        Pago pago = Pago.builder()
+            .compra(compraR)
+            .proveedor("SIMULADO")
+            .idPagoExterno(UUID.randomUUID().toString())
+            .monto(compraR.getTotal())
+            .estado(EstadoPago.APROBADO)
+            .fechaConfirmacion(LocalDateTime.now())
+            .build();
+
+        pagoRepository.save(pago);
+
+        compraR.setEstado(EstadoCompra.PAGADA);
+        compraR.setFechaPago(LocalDateTime.now());
+
+        compraRepository.save(compraR);
+
+        return new PagoResponse(compraR.getId(), compraR.getEstado(), compraR.getTotal());
     }
     
 }
