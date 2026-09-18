@@ -124,4 +124,100 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
     }
 
+    @ExceptionHandler(FechaFinPosteriorAInicioException.class)
+    public ResponseEntity<ApiError> handleFechaFinPosteriorAInicio(FechaFinPosteriorAInicioException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.BAD_REQUEST.value(),
+                "Fechas invalidas",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiError);
+    }
+
+    @ExceptionHandler(EventoNoEncontradoException.class)
+    public ResponseEntity<ApiError> handleEventoNoEncontrado(EventoNoEncontradoException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.NOT_FOUND.value(),
+                "Evento no enontrado",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
+    }
+
+    @ExceptionHandler(EventosEnBorradorException.class)
+    public ResponseEntity<ApiError> handleEventosEnBorrador(EventosEnBorradorException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "No se puede modificar el evento",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(BoletoExistenteException.class)
+    public ResponseEntity<ApiError> handleBoletoExistente(BoletoExistenteException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "Boleto existente",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(PublicarEventoException.class)
+    public ResponseEntity<ApiError> handlePublicarEvento(PublicarEventoException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.BAD_REQUEST.value(),
+                "No se puede publicar el evento",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiError);
+    }
+
+    @ExceptionHandler(AlMenosUnBoletoException.class)
+    public ResponseEntity<ApiError> handleAlMenosUnBoleto(AlMenosUnBoletoException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.BAD_REQUEST.value(),
+                "El evento debe tener un boleto",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiError);
+    }
+
+    @ExceptionHandler(FechaInicioFuturaException.class)
+    public ResponseEntity<ApiError> handleFechaInicioFutura(FechaInicioFuturaException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.BAD_REQUEST.value(),
+                "La fecha de inicio debe ser futura",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiError);
+    }
+
+    @ExceptionHandler(EventoNoDisponibleException.class)
+    public ResponseEntity<ApiError> handleEventoNoDisponible(EventoNoDisponibleException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.NOT_FOUND.value(),
+                "Evento no disponible",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
+    }
+
 }
