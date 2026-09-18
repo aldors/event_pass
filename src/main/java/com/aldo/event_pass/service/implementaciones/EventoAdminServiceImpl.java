@@ -12,6 +12,13 @@ import com.aldo.event_pass.dto.tipo_boleto.TipoBoletoResponse;
 import com.aldo.event_pass.entity.Evento;
 import com.aldo.event_pass.entity.TipoBoleto;
 import com.aldo.event_pass.enums.EstadoEvento;
+import com.aldo.event_pass.exception.AlMenosUnBoletoException;
+import com.aldo.event_pass.exception.BoletoExistenteException;
+import com.aldo.event_pass.exception.EventoNoEncontradoException;
+import com.aldo.event_pass.exception.EventosEnBorradorException;
+import com.aldo.event_pass.exception.FechaFinPosteriorAInicioException;
+import com.aldo.event_pass.exception.FechaInicioFuturaException;
+import com.aldo.event_pass.exception.PublicarEventoException;
 import com.aldo.event_pass.mapper.EventoMapper;
 import com.aldo.event_pass.mapper.TipoBoletoMapper;
 import com.aldo.event_pass.repository.EventoRepository;
@@ -32,7 +39,7 @@ public class EventoAdminServiceImpl implements EventoAdminService {
     public EventoResponse crear(EventoRequest eventoRequest) {
 
         if(eventoRequest.getFechaFin().isBefore(eventoRequest.getFechaInicio())){
-            throw new IllegalArgumentException("La fecha de fin debe ser posterior a la fecha de inicio");
+            throw new FechaFinPosteriorAInicioException();
         }
 
         Evento evento = EventoMapper.toEntity(eventoRequest);
@@ -44,14 +51,14 @@ public class EventoAdminServiceImpl implements EventoAdminService {
     public TipoBoletoResponse agregarTipoBoleto(Long eventoId, TipoBoletoRequest tipoBoletoRequest) {
         
         Evento evento = eventoRepository.findById(eventoId)
-            .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
+            .orElseThrow(() -> new EventoNoEncontradoException());
 
         if(evento.getEstado() != EstadoEvento.BORRADOR){
-            throw new RuntimeException("Solo se pueden agregar tipoS de boleto a eventos en borrador");
+            throw new EventosEnBorradorException();
         }
 
         if(tipoBoletoRepository.existsByEventoIdAndNombreIgnoreCase(eventoId, tipoBoletoRequest.getNombre())){
-            throw new RuntimeException("Ya existe un tipo de boleto con este nombre");
+            throw new BoletoExistenteException();
         }
 
         TipoBoleto tipoBoleto = TipoBoletoMapper.toEntity(tipoBoletoRequest);
@@ -65,20 +72,20 @@ public class EventoAdminServiceImpl implements EventoAdminService {
     public EventoResponse publicarEvento(Long eventoId) {
         
         Evento evento = eventoRepository.findById(eventoId)
-            .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
+            .orElseThrow(() -> new EventoNoEncontradoException());
 
         if(evento.getEstado() != EstadoEvento.BORRADOR) {
-            throw new RuntimeException("Solo los eventos en borrador pueden publicarse");
+            throw new PublicarEventoException();
         }
 
         long cantidadTiposBoleto = tipoBoletoRepository.countByEventoId(eventoId);
 
         if(cantidadTiposBoleto == 0) {
-            throw new RuntimeException("El evento debe tener al menos un tipo de boleto");
+            throw new AlMenosUnBoletoException();
         }
 
         if(!evento.getFechaInicio().isAfter(LocalDateTime.now())) {
-            throw new RuntimeException("La fecha del evento debe ser futura");
+            throw new FechaInicioFuturaException();
         }
 
         evento.setEstado(EstadoEvento.PUBLICADO);

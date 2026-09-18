@@ -9,6 +9,8 @@ import com.aldo.event_pass.dto.evento.EventoDetalleResponse;
 import com.aldo.event_pass.dto.evento.EventoListadoResponse;
 import com.aldo.event_pass.entity.Evento;
 import com.aldo.event_pass.enums.EstadoEvento;
+import com.aldo.event_pass.exception.EventoNoDisponibleException;
+import com.aldo.event_pass.exception.EventoNoEncontradoException;
 import com.aldo.event_pass.mapper.EventoMapper;
 import com.aldo.event_pass.repository.EventoRepository;
 import com.aldo.event_pass.service.interfaces.EventoPublicService;
@@ -35,10 +37,10 @@ public class EventoPublicServiceImpl implements EventoPublicService {
     public EventoDetalleResponse obtenerEventosPorId(Long eventoId) {
 
         Evento evento = eventoRepository.findById(eventoId)
-            .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
+            .orElseThrow(() -> new EventoNoEncontradoException());
 
         if(evento.getEstado() != EstadoEvento.PUBLICADO) {
-            throw new RuntimeException( "Evento no disponible");
+            throw new EventoNoDisponibleException();
         }
 
         return EventoMapper.toDetalleResponse(evento);
