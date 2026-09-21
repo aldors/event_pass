@@ -11,9 +11,12 @@ import com.aldo.event_pass.dto.boleto.UsarBoletoResponse;
 import com.aldo.event_pass.entity.Boleto;
 import com.aldo.event_pass.entity.Evento;
 import com.aldo.event_pass.entity.TipoBoleto;
+import com.aldo.event_pass.entity.Usuario;
 import com.aldo.event_pass.enums.EstadoBoleto;
 import com.aldo.event_pass.repository.BoletoRepository;
+import com.aldo.event_pass.security.CurrentUserService;
 import com.aldo.event_pass.service.interfaces.BoletoService;
+import com.aldo.event_pass.service.interfaces.PdfService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +25,8 @@ import lombok.RequiredArgsConstructor;
 public class BoletoServiceImpl implements BoletoService {
 
     private final BoletoRepository boletoRepository;
+    private final PdfService pdfService;
+    private final CurrentUserService currentUserService;
 
     @Override
     @Transactional(readOnly = true)
@@ -78,6 +83,24 @@ public class BoletoServiceImpl implements BoletoService {
                 boleto.getEstado(),
                 "Acceso permitido"
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] generarPdf(Long boletoId) {
+        
+        Usuario usuario = currentUserService.obtenerUsuarioActual();
+
+        Boleto boleto = boletoRepository.findById(boletoId)
+            .orElseThrow(() -> new RuntimeException("Boleto no encontrado"));
+
+        Long propietarioId = boleto.getDetalleCompra().getCompra().getUsuario().getId();
+
+        if (!propietarioId.equals(usuario.getId())) {
+            throw new RuntimeException("No tienes permiso para descargar este boleto");
+        }
+
+        return pdfService.generarPdf(boleto);
     }
     
 }

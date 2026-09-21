@@ -7,4 +7,5 @@ public interface BoletoService {
 
     public BoletoResponse verificarBoleto(String codigoQr);
     public UsarBoletoResponse usarBoleto(String codigoQr);
+    public byte[] generarPdf(Long boletoId);
 }
