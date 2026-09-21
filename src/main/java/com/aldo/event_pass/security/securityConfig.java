@@ -33,6 +33,8 @@ public class securityConfig {
                         .requestMatchers("/auth/registro", "/auth/login").permitAll()
                         .requestMatchers("/auth/refresh-token", "/auth/logout", "/auth/me").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/admin/eventos/crear", "/admin/eventos/{eventoId}/agregar-tipo-boleto", "/admin/eventos/{eventoId}/publicar").hasRole("ADMIN")
+                        .requestMatchers("/boletos/verificar/{codigoQr}").permitAll()
+                        .requestMatchers("/boletos/{codigoQr}/usar").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
