@@ -1,5 +1,7 @@
 package com.aldo.event_pass.repository;
 
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -22,4 +24,5 @@ public interface BoletoRepository extends JpaRepository<Boleto, Long> {
     )
     """)
     Long contarBoletosUsuarioPorEvento(Long usuarioId, Long eventoId);
+    Optional<Boleto> findByCodigoQr(String codigoQr);
 }
