@@ -1,11 +1,14 @@
 package com.aldo.event_pass.mapper;
 
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 
 import com.aldo.event_pass.dto.evento.EventoDetalleResponse;
 import com.aldo.event_pass.dto.evento.EventoListadoResponse;
 import com.aldo.event_pass.dto.evento.EventoRequest;
 import com.aldo.event_pass.dto.evento.EventoResponse;
+import com.aldo.event_pass.dto.tipo_boleto.TipoBoletoDisponibleResponse;
 import com.aldo.event_pass.entity.Evento;
 
 @Component
@@ -45,7 +48,7 @@ public class EventoMapper {
         );
     }
 
-    public static EventoDetalleResponse toDetalleResponse(Evento evento){
+    public static EventoDetalleResponse toDetalleResponse(Evento evento, List<TipoBoletoDisponibleResponse> tiposBoleto){
         return new EventoDetalleResponse(
             evento.getId(),
             evento.getNombre(),
@@ -54,10 +57,7 @@ public class EventoMapper {
             evento.getFechaInicio(),
             evento.getFechaFin(),
             evento.getMaxBoletosPorUsuario(),
-            evento.getTiposBoleto()
-                .stream()
-                .map(TipoBoletoMapper::toDisponibleResponse)
-                .toList()
+            tiposBoleto
         );
     }
 }

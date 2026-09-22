@@ -29,12 +29,13 @@ public class TipoBoletoMapper {
         );
     }
 
-    public static TipoBoletoDisponibleResponse toDisponibleResponse(TipoBoleto tipoBoleto){
+    public static TipoBoletoDisponibleResponse toDisponibleResponse(TipoBoleto tipoBoleto, Integer disponibles){
         return new TipoBoletoDisponibleResponse(
             tipoBoleto.getId(),
             tipoBoleto.getNombre(),
             tipoBoleto.getPrecio(),
-            tipoBoleto.getCantidadTotal()
+            tipoBoleto.getCantidadTotal(),
+            disponibles
         );
     }
 }

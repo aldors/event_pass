@@ -12,5 +12,6 @@ public class TipoBoletoDisponibleResponse {
     private Long id;
     private String nombre;
     private BigDecimal precio;
+    private Integer cantidadTotal;
     private Integer disponibles;
 }
