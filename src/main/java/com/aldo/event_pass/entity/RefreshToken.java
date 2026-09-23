@@ -30,12 +30,4 @@ public class RefreshToken {
     private Usuario usuario;
 
     private LocalDateTime expirationDate;
-
-
-    @PrePersist
-    public void prePersist() {
-        if (expirationDate == null) {
-            expirationDate = LocalDateTime.now().plusDays(1);
-        }
-    }
 }
