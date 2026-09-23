@@ -3,6 +3,7 @@ package com.aldo.event_pass.controller;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,11 +28,13 @@ public class BoletoController {
         return ResponseEntity.ok(boletoService.verificarBoleto(codigoQr));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{codigoQr}/usar")
     public ResponseEntity<UsarBoletoResponse> usarBoleto(@PathVariable String codigoQr) {
         return ResponseEntity.ok(boletoService.usarBoleto(codigoQr));
     }
 
+    @PreAuthorize("hasRole('USER', 'ADMIN')")
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> generarPdf(@PathVariable Long id) {
 

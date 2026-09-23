@@ -2,6 +2,7 @@ package com.aldo.event_pass.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/admin/eventos")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class EventoAdminController {
 
     private final EventoAdminService eventoAdminService;

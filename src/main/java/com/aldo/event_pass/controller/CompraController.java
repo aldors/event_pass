@@ -1,6 +1,7 @@
 package com.aldo.event_pass.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/compras")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class CompraController {
     
     private final CompraService compraService;
