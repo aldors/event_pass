@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -16,6 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import lombok.RequiredArgsConstructor;
 
 @Configuration
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class securityConfig {
 
@@ -28,6 +30,8 @@ public class securityConfig {
 
         return http
                 .csrf(csrf -> csrf.disable())
+                .formLogin(form -> form.disable())
+                .httpBasic(httpBasic -> httpBasic.disable())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/registro", "/auth/login", "/auth/refresh-token").permitAll()
