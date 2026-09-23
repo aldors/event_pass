@@ -2,6 +2,7 @@ package com.aldo.event_pass.service.implementaciones;
 
 import java.time.LocalDateTime;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -46,6 +47,9 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final CurrentUserService currentUserService;
 
+    @Value("${jwt.expirationRefreshToken}")
+    private long jwtExpirationRefreshToken;
+
     @Override
     public RegistroResponse registro(RegistroRequest registroRequest) {
 
@@ -59,6 +63,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public LoginResponse login(LoginRequest loginRequest) {
         
         authenticationManager.authenticate(
@@ -70,15 +75,18 @@ public class AuthServiceImpl implements AuthService {
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(loginRequest.getEmail());
 
+        Usuario usuario = usuarioRepository.findByEmail(loginRequest.getEmail())
+        .orElseThrow(() -> new UsuarioNoEncontradoException());
+        
+        refreshTokenRepository.deleteByUsuario(usuario);
+        
         String accessToken = jwtService.generateAccessToken(userDetails);
         String refreshToken = jwtService.generateRefreshToken(userDetails);
-
-        Usuario usuario = usuarioRepository.findByEmail(loginRequest.getEmail())
-            .orElseThrow(() -> new UsuarioNoEncontradoException());
-
+        
         RefreshToken refreshTokenEntity = RefreshToken.builder()
             .token(refreshToken)
             .usuario(usuario)
+            .expirationDate(LocalDateTime.now().plusSeconds(jwtExpirationRefreshToken / 1000))
             .build();
 
         refreshTokenRepository.save(refreshTokenEntity);
