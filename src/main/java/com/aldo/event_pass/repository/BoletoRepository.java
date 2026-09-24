@@ -3,12 +3,9 @@ package com.aldo.event_pass.repository;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 
 import com.aldo.event_pass.entity.Boleto;
-
-import jakarta.persistence.LockModeType;
 
 public interface BoletoRepository extends JpaRepository<Boleto, Long> {
     
@@ -27,7 +24,5 @@ public interface BoletoRepository extends JpaRepository<Boleto, Long> {
     )
     """)
     Long contarBoletosUsuarioPorEvento(Long usuarioId, Long eventoId);
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Boleto> findByCodigoQr(String codigoQr);
 }
