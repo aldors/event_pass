@@ -50,6 +50,7 @@ public class Compra {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
+    @Builder.Default
     private List<DetalleCompra> detalles = new ArrayList<>();
 
     @OneToMany(
@@ -57,6 +58,7 @@ public class Compra {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
+    @Builder.Default
     private List<Pago> pagos = new ArrayList<>();
 
 

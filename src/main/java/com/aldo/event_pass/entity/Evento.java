@@ -59,6 +59,7 @@ public class Evento {
         cascade = CascadeType.ALL,
         orphanRemoval = true
     )
+    @Builder.Default
     private List<TipoBoleto> tiposBoleto = new ArrayList<>();
 
     

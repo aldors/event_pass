@@ -45,5 +45,6 @@ public class TipoBoleto {
     private Integer cantidadTotal;
 
     @OneToMany(mappedBy = "tipoBoleto")
+    @Builder.Default
     private List<DetalleCompra> detallesCompra = new ArrayList<>();
 }

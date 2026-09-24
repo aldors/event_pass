@@ -54,6 +54,7 @@ public class Usuario {
     @OneToMany(
         mappedBy = "usuario"
     )
+    @Builder.Default
     private List<Compra> compras = new ArrayList<>();
 
 

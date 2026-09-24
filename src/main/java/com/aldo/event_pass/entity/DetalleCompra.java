@@ -46,6 +46,7 @@ public class DetalleCompra {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
+    @Builder.Default
     private List<Boleto> boletos = new ArrayList<>();
 
 
