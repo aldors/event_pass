@@ -3,6 +3,7 @@ package com.aldo.event_pass.exception;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -45,6 +46,20 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(apiError);
+    }
+
+    // Manejo de concurrencia si dos usuarios intentan registrar
+    // el mismo email al mismo tiempo o cualquier violación de una restricción en la base de datos
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "Conflicto de integridad de datos",
+                List.of("No fue posible procesar la solicitud debido a una restricción de datos")
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
     }
 
     // Manejo general de excepciones no controladas
