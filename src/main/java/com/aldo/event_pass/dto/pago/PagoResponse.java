@@ -11,7 +11,7 @@ import lombok.Getter;
 @Getter
 public class PagoResponse {
 
-    private Long compraRId;
+    private Long compraId;
     private EstadoCompra estado;
     private BigDecimal total;
 }

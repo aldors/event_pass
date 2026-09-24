@@ -38,7 +38,7 @@ public class EventoPublicServiceImpl implements EventoPublicService {
 
     @Override
     @Transactional(readOnly = true)
-    public EventoDetalleResponse obtenerEventosPorId(Long eventoId) {
+    public EventoDetalleResponse obtenerEventoPorId(Long eventoId) {
 
         Evento evento = eventoRepository.findById(eventoId)
             .orElseThrow(() -> new EventoNoEncontradoException());

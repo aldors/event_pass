@@ -45,8 +45,8 @@ public class AuthController {
 
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@Valid @RequestBody LogoutRequest LogoutRequest){
-        return ResponseEntity.ok(authService.logout(LogoutRequest));
+    public ResponseEntity<String> logout(@Valid @RequestBody LogoutRequest logoutRequest){
+        return ResponseEntity.ok(authService.logout(logoutRequest));
     }
 
     @PreAuthorize("isAuthenticated()")

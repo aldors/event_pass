@@ -29,8 +29,8 @@ public class CompraController {
         return ResponseEntity.ok(compraService.reservarBoletos(reservarBoletosRequest));
     }
 
-    @PostMapping("/{compraRId}/pagar")
-    public ResponseEntity<PagoResponse> pagar(@PathVariable Long compraRId){
-        return ResponseEntity.ok(compraService.pagar(compraRId));
+    @PostMapping("/{compraId}/pagar")
+    public ResponseEntity<PagoResponse> pagar(@PathVariable Long compraId){
+        return ResponseEntity.ok(compraService.pagar(compraId));
     }
 }

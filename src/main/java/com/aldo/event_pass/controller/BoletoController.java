@@ -24,7 +24,7 @@ public class BoletoController {
     private final BoletoService boletoService;
     
     @GetMapping("/verificar/{codigoQr}")
-    public ResponseEntity<BoletoResponse>erificarBoleto(@PathVariable String codigoQr) {
+    public ResponseEntity<BoletoResponse>verificarBoleto(@PathVariable String codigoQr) {
         return ResponseEntity.ok(boletoService.verificarBoleto(codigoQr));
     }
 

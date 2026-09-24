@@ -8,5 +8,5 @@ import com.aldo.event_pass.dto.evento.EventoListadoResponse;
 public interface EventoPublicService {
     
     public List<EventoListadoResponse> obtenerEventos();
-    public EventoDetalleResponse obtenerEventosPorId(Long eventoId);
+    public EventoDetalleResponse obtenerEventoPorId(Long eventoId);
 }

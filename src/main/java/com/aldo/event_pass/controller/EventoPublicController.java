@@ -27,8 +27,8 @@ public class EventoPublicController {
     }
 
     @GetMapping("/{eventoId}/obtener")
-    public ResponseEntity<EventoDetalleResponse> obtenerEventosPorId(@PathVariable Long eventoId){
-        return ResponseEntity.ok(eventoPublicService.obtenerEventosPorId(eventoId));
+    public ResponseEntity<EventoDetalleResponse> obtenerEventoPorId(@PathVariable Long eventoId){
+        return ResponseEntity.ok(eventoPublicService.obtenerEventoPorId(eventoId));
     }
     
 }

@@ -170,38 +170,40 @@ public class CompraServiceImpl implements CompraService {
 
     @Override
     @Transactional
-    public PagoResponse pagar(Long compraRId) {
+    public PagoResponse pagar(Long compraId) {
 
         Usuario usuario = currentUserService.obtenerUsuarioActual();
 
-        Compra compraR = compraRepository.findByIdAndUsuarioId(compraRId, usuario.getId())
+        // Se gurada la compra 'reservada'
+        Compra compra = compraRepository.findByIdAndUsuarioId(compraId, usuario.getId())
             .orElseThrow(() -> new RuntimeException("Compra no encontrada"));
 
-        if(compraR.getEstado() != EstadoCompra.RESERVADA){
+        if(compra.getEstado() != EstadoCompra.RESERVADA){
             throw new RuntimeException("La compra no está reservada");
         }
 
-        if(compraR.getFechaExpiracionReserva().isBefore(LocalDateTime.now())){
+        if(compra.getFechaExpiracionReserva().isBefore(LocalDateTime.now())){
             throw new RuntimeException("La reserva expiró");
         }
 
         Pago pago = Pago.builder()
-            .compra(compraR)
+            .compra(compra)
             .proveedor("SIMULADO")
             .idPagoExterno(UUID.randomUUID().toString())
-            .monto(compraR.getTotal())
+            .monto(compra.getTotal())
             .estado(EstadoPago.APROBADO)
             .fechaConfirmacion(LocalDateTime.now())
             .build();
 
         pagoRepository.save(pago);
 
-        compraR.setEstado(EstadoCompra.PAGADA);
-        compraR.setFechaPago(LocalDateTime.now());
+        // Aquí la compra ya no esta 'reservada'
+        compra.setEstado(EstadoCompra.PAGADA);
+        compra.setFechaPago(LocalDateTime.now());
 
-        compraRepository.save(compraR);
+        compraRepository.save(compra);
 
-        return new PagoResponse(compraR.getId(), compraR.getEstado(), compraR.getTotal());
+        return new PagoResponse(compra.getId(), compra.getEstado(), compra.getTotal());
     }
     
 }
