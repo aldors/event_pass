@@ -34,7 +34,7 @@ public class BoletoController {
         return ResponseEntity.ok(boletoService.usarBoleto(codigoQr));
     }
 
-    @PreAuthorize("hasRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> generarPdf(@PathVariable Long id) {
 
