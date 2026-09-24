@@ -50,8 +50,8 @@ public class EventoPublicServiceImpl implements EventoPublicService {
         List<TipoBoletoDisponibleResponse> tiposBoleto = evento.getTiposBoleto()
             .stream()
             .map(tipoBoleto -> {
-                Integer ocupados = detalleCompraRepository.obtenerBoletosOcupados(tipoBoleto.getId());
-                int disponibles = Math.max(0, tipoBoleto.getCantidadTotal() - ocupados);
+                Long ocupados = detalleCompraRepository.obtenerBoletosOcupados(tipoBoleto.getId());
+                int disponibles = Math.max(0, tipoBoleto.getCantidadTotal() - ocupados.intValue());
                 return TipoBoletoMapper.toDisponibleResponse(tipoBoleto, disponibles);
             })
             .toList();

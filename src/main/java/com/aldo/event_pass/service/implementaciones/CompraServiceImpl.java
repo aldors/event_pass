@@ -120,9 +120,9 @@ public class CompraServiceImpl implements CompraService {
                 throw new RuntimeException("El tipo de boleto no pertenece al evento");
             }
 
-            Integer ocupados = detalleCompraRepository.obtenerBoletosOcupados(tipoBoleto.getId());
+            Long ocupados = detalleCompraRepository.obtenerBoletosOcupados(tipoBoleto.getId());
 
-            int disponibles = tipoBoleto.getCantidadTotal() - ocupados;
+            int disponibles = tipoBoleto.getCantidadTotal() - ocupados.intValue();
 
             // Cantidad de titulares por boleto
             // 1 = {titular1, titular2} -> cantidadSolicitada = 2

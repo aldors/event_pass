@@ -21,5 +21,5 @@ public interface DetalleCompraRepository extends JpaRepository<DetalleCompra, Lo
         )
     )
     """)
-    Integer obtenerBoletosOcupados(@Param("tipoBoletoId") Long tipoBoletoId);
+    Long obtenerBoletosOcupados(@Param("tipoBoletoId") Long tipoBoletoId);
 }
