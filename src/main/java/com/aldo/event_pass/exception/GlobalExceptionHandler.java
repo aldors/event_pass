@@ -235,4 +235,124 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
     }
 
+    @ExceptionHandler(ReservarBoletosEnEventosPublicadosException.class)
+    public ResponseEntity<ApiError> handleReservarBoletosEnEventosPublicados(ReservarBoletosEnEventosPublicadosException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "Mo puedes reservar boletos de este evento",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(EventoIniciadoException.class)
+    public ResponseEntity<ApiError> handleEventoIniciado(EventoIniciadoException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "El evento inició",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(ExcederMaximosBoletosPorUsuarioException.class)
+    public ResponseEntity<ApiError> handleExcederMaximosBoletosPorUsuario(ExcederMaximosBoletosPorUsuarioException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "No puedes exceder el límite de compra",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(TipoBoletoInexistenteException.class)
+    public ResponseEntity<ApiError> handleTipoBoletoInexistente(TipoBoletoInexistenteException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.NOT_FOUND.value(),
+                "Tipo de boleto inexistente",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
+    }
+
+    @ExceptionHandler(TipoBoletoNoEncontradoException.class)
+    public ResponseEntity<ApiError> handleTipoBoletoNoEncontrado(TipoBoletoNoEncontradoException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.NOT_FOUND.value(),
+                "Tipo de boleto no encontrado",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
+    }
+
+    @ExceptionHandler(TipoBoletoNoPerteneceAlEventoException.class)
+    public ResponseEntity<ApiError> handleTipoBoletoNoPerteneceAlEvento(TipoBoletoNoPerteneceAlEventoException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "El tipo de boleto no pertenece al evento",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(InsuficienciaDeBoletosException.class)
+    public ResponseEntity<ApiError> handleInsuficienciaDeBoletos(InsuficienciaDeBoletosException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "No hay suficientes boletos",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(CompraNoEncontradaException.class)
+    public ResponseEntity<ApiError> handleCompraNoEncontrada(CompraNoEncontradaException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.NOT_FOUND.value(),
+                "Compra no encontrada",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
+    }
+
+    @ExceptionHandler(CompraNoReservadaException.class)
+    public ResponseEntity<ApiError> handleCompraNoEReservada(CompraNoReservadaException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "Compra no reservada",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(ReservaExpiradaException.class)
+    public ResponseEntity<ApiError> handleReservaExpirada(ReservaExpiradaException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "Reserva expirada",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
 }
