@@ -415,4 +415,28 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(apiError);
     }
 
+    @ExceptionHandler(GeneracionPdfException.class)
+    public ResponseEntity<ApiError> handleGeneracionPdf(GeneracionPdfException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "No fue posible generar el boleto pdf",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiError);
+    }
+
+    @ExceptionHandler(GeneracionQrException.class)
+    public ResponseEntity<ApiError> handleGeneracionQr(GeneracionQrException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "No fue posible generar el código Qr",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiError);
+    }
+
 }
