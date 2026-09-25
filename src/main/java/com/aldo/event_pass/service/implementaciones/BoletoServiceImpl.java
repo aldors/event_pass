@@ -13,6 +13,11 @@ import com.aldo.event_pass.entity.Evento;
 import com.aldo.event_pass.entity.TipoBoleto;
 import com.aldo.event_pass.entity.Usuario;
 import com.aldo.event_pass.enums.EstadoBoleto;
+import com.aldo.event_pass.exception.BoletoInvalidadoException;
+import com.aldo.event_pass.exception.BoletoNoEncontradoException;
+import com.aldo.event_pass.exception.BoletoUtilizadoException;
+import com.aldo.event_pass.exception.EventoFinalizadoException;
+import com.aldo.event_pass.exception.PermisoDenegadoParaGenerarBoletoException;
 import com.aldo.event_pass.repository.BoletoRepository;
 import com.aldo.event_pass.security.CurrentUserService;
 import com.aldo.event_pass.service.interfaces.BoletoService;
@@ -33,7 +38,7 @@ public class BoletoServiceImpl implements BoletoService {
     public BoletoResponse verificarBoleto(String codigoQr) {
         
         Boleto boleto = boletoRepository.findByCodigoQr(codigoQr)
-            .orElseThrow(() -> new RuntimeException("Boleto no encontrado"));
+            .orElseThrow(() -> new BoletoNoEncontradoException());
 
         Evento evento = boleto.getDetalleCompra().getTipoBoleto().getEvento();
 
@@ -56,20 +61,20 @@ public class BoletoServiceImpl implements BoletoService {
     public UsarBoletoResponse usarBoleto(String codigoQr) {
         
         Boleto boleto = boletoRepository.findByCodigoQr(codigoQr)
-            .orElseThrow(() -> new RuntimeException("Boleto no encontrado"));
+            .orElseThrow(() -> new BoletoNoEncontradoException());
 
         if (boleto.getEstado() == EstadoBoleto.UTILIZADO) {
-            throw new RuntimeException("Este boleto ya fue utilizado");
+            throw new BoletoUtilizadoException();
         }
 
         if (boleto.getEstado() == EstadoBoleto.INVALIDADO) {
-            throw new RuntimeException("Este boleto fue invalidado");
+            throw new BoletoInvalidadoException();
         }
 
         Evento evento = boleto.getDetalleCompra().getTipoBoleto().getEvento();
 
         if (evento.getFechaFin().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("El evento ya finalizó");
+            throw new EventoFinalizadoException();
         }
 
         boleto.setEstado(EstadoBoleto.UTILIZADO);
@@ -92,12 +97,12 @@ public class BoletoServiceImpl implements BoletoService {
         Usuario usuario = currentUserService.obtenerUsuarioActual();
 
         Boleto boleto = boletoRepository.findById(boletoId)
-            .orElseThrow(() -> new RuntimeException("Boleto no encontrado"));
+            .orElseThrow(() -> new BoletoNoEncontradoException());
 
         Long propietarioId = boleto.getDetalleCompra().getCompra().getUsuario().getId();
 
         if (!propietarioId.equals(usuario.getId())) {
-            throw new RuntimeException("No tienes permiso para descargar este boleto");
+            throw new PermisoDenegadoParaGenerarBoletoException();
         }
 
         return pdfService.generarPdf(boleto);
