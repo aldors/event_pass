@@ -24,6 +24,17 @@ import com.aldo.event_pass.entity.Usuario;
 import com.aldo.event_pass.enums.EstadoCompra;
 import com.aldo.event_pass.enums.EstadoEvento;
 import com.aldo.event_pass.enums.EstadoPago;
+import com.aldo.event_pass.exception.TipoBoletoNoEncontradoException;
+import com.aldo.event_pass.exception.TipoBoletoNoPerteneceAlEventoException;
+import com.aldo.event_pass.exception.CompraNoEncontradaException;
+import com.aldo.event_pass.exception.CompraNoReservadaException;
+import com.aldo.event_pass.exception.EventoIniciadoException;
+import com.aldo.event_pass.exception.EventoNoEncontradoException;
+import com.aldo.event_pass.exception.ExcederMaximosBoletosPorUsuarioException;
+import com.aldo.event_pass.exception.InsuficienciaDeBoletosException;
+import com.aldo.event_pass.exception.ReservaExpiradaException;
+import com.aldo.event_pass.exception.ReservarBoletosEnEventosPublicadosException;
+import com.aldo.event_pass.exception.TipoBoletoInexistenteException;
 import com.aldo.event_pass.repository.BoletoRepository;
 import com.aldo.event_pass.repository.CompraRepository;
 import com.aldo.event_pass.repository.DetalleCompraRepository;
@@ -54,14 +65,14 @@ public class CompraServiceImpl implements CompraService {
         Usuario usuario = currentUserService.obtenerUsuarioActual();
 
         Evento evento = eventoRepository.findById(reservarBoletosRequest.getEventoId())
-            .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
+            .orElseThrow(() -> new EventoNoEncontradoException());
 
         if(evento.getEstado() != EstadoEvento.PUBLICADO){
-            throw new RuntimeException("Solo puedes reservar boletos de eventos publicados");
+            throw new ReservarBoletosEnEventosPublicadosException();
         }
 
         if(!evento.getFechaInicio().isAfter(LocalDateTime.now())){
-            throw new RuntimeException("No puedes reservar boletos de un evento que ya inició");
+            throw new EventoIniciadoException();
         }
 
         // Boletos que ya ha comprado este usuario en este evento
@@ -70,7 +81,7 @@ public class CompraServiceImpl implements CompraService {
         int boletosNuevos = reservarBoletosRequest.getBoletos().size();
 
         if((boletosActuales + boletosNuevos) > evento.getMaxBoletosPorUsuario()){
-            throw new RuntimeException("No puedes exceder el limite de compra de boletos por usuario");
+            throw new ExcederMaximosBoletosPorUsuarioException();
         }
 
         // 1 = {titular1, titular2},
@@ -87,7 +98,7 @@ public class CompraServiceImpl implements CompraService {
         List<TipoBoleto> tiposBoleto = tipoBoletoRepository.buscarTodosParaReserva(ids);
 
         if(tiposBoleto.size() != boletosAgrupados.size()) {
-            throw new RuntimeException("Uno o más tipos de boleto no existen");
+            throw new TipoBoletoInexistenteException();
         }
 
         Map<Long, TipoBoleto> tiposBoletoMap = tiposBoleto.stream()
@@ -113,11 +124,11 @@ public class CompraServiceImpl implements CompraService {
             TipoBoleto tipoBoleto = tiposBoletoMap.get(tipoBoletoId);
 
             if (tipoBoleto == null) {
-                throw new RuntimeException("Tipo de boleto no encontrado");
+                throw new TipoBoletoNoEncontradoException();
             }
 
             if(!tipoBoleto.getEvento().getId().equals(evento.getId())){
-                throw new RuntimeException("El tipo de boleto no pertenece al evento");
+                throw new TipoBoletoNoPerteneceAlEventoException();
             }
 
             Long ocupados = detalleCompraRepository.obtenerBoletosOcupados(tipoBoleto.getId());
@@ -129,7 +140,7 @@ public class CompraServiceImpl implements CompraService {
             int cantidadSolicitada = boletosSolicitados.size();
 
             if (cantidadSolicitada > disponibles) {
-                throw new RuntimeException("No hay suficientes boletos disponibles para: " + tipoBoleto.getNombre());
+                throw new InsuficienciaDeBoletosException(tipoBoleto.getNombre());
             }
 
             DetalleCompra detalleCompra = new DetalleCompra();
@@ -176,14 +187,14 @@ public class CompraServiceImpl implements CompraService {
 
         // Se gurada la compra 'reservada'
         Compra compra = compraRepository.findByIdAndUsuarioId(compraId, usuario.getId())
-            .orElseThrow(() -> new RuntimeException("Compra no encontrada"));
+            .orElseThrow(() -> new CompraNoEncontradaException());
 
         if(compra.getEstado() != EstadoCompra.RESERVADA){
-            throw new RuntimeException("La compra no está reservada");
+            throw new CompraNoReservadaException();
         }
 
         if(compra.getFechaExpiracionReserva().isBefore(LocalDateTime.now())){
-            throw new RuntimeException("La reserva expiró");
+            throw new ReservaExpiradaException();
         }
 
         Pago pago = Pago.builder()
