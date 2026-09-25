@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.springframework.stereotype.Service;
 
+import com.aldo.event_pass.exception.GeneracionQrException;
 import com.aldo.event_pass.service.interfaces.QrService;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.MultiFormatWriter;
@@ -38,7 +39,7 @@ public class QrServiceImpl implements QrService {
             return outputStream.toByteArray();
 
         } catch (WriterException | IOException e) {
-            throw new RuntimeException("Error al generar el código QR", e);
+            throw new GeneracionQrException(e);
         }
     }
     

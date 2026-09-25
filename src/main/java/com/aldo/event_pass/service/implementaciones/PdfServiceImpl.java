@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import com.aldo.event_pass.entity.Boleto;
 import com.aldo.event_pass.entity.Evento;
 import com.aldo.event_pass.entity.TipoBoleto;
+import com.aldo.event_pass.exception.GeneracionPdfException;
 import com.aldo.event_pass.service.interfaces.PdfService;
 import com.aldo.event_pass.service.interfaces.QrService;
 
@@ -189,7 +190,7 @@ public class PdfServiceImpl implements PdfService {
             return outputStream.toByteArray();
 
         } catch (Exception e) {
-            throw new RuntimeException("Error al generar el PDF del boleto", e);
+            throw new GeneracionPdfException(e);
         }
     }
 
