@@ -355,4 +355,64 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
     }
 
+    @ExceptionHandler(BoletoNoEncontradoException.class)
+    public ResponseEntity<ApiError> handleBoletoNoEncontrado(BoletoNoEncontradoException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.NOT_FOUND.value(),
+                "Boleto no encontrado",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
+    }
+
+    @ExceptionHandler(BoletoUtilizadoException.class)
+    public ResponseEntity<ApiError> handleBoletoUtilizado(BoletoUtilizadoException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "Boleto utilizado",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(BoletoInvalidadoException.class)
+    public ResponseEntity<ApiError> handleBoletoInvalidado(BoletoInvalidadoException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "Boleto invalidado",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(EventoFinalizadoException.class)
+    public ResponseEntity<ApiError> handleEventoFinalizado(EventoFinalizadoException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "Evento finalizado",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(PermisoDenegadoParaGenerarBoletoException.class)
+    public ResponseEntity<ApiError> handlePermisoDenegadoParaGenerarBoleto(PermisoDenegadoParaGenerarBoletoException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.FORBIDDEN.value(),
+                "No puedes descargar este boleto",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(apiError);
+    }
+
 }
