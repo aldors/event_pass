@@ -391,12 +391,60 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
     }
 
+    @ExceptionHandler(BoletoNoPagadoException.class)
+    public ResponseEntity<ApiError> handleBoletoNoPagado(BoletoNoPagadoException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.PAYMENT_REQUIRED.value(),
+                "Boleto no pagado",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(apiError);
+    }
+
     @ExceptionHandler(EventoFinalizadoException.class)
     public ResponseEntity<ApiError> handleEventoFinalizado(EventoFinalizadoException ex) {
             
         ApiError apiError = new ApiError(
                 HttpStatus.CONFLICT.value(),
                 "Evento finalizado",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(EventoCanceladoException.class)
+    public ResponseEntity<ApiError> handleEventoCancelado(EventoCanceladoException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.GONE.value(),
+                "Evento cancelado",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.GONE).body(apiError);
+    }
+
+    @ExceptionHandler(CancelarEventoException.class)
+    public ResponseEntity<ApiError> handleCancelarEvento(CancelarEventoException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "No se puede cancelar el evento",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(EliminarBorradorException.class)
+    public ResponseEntity<ApiError> handleEliminarBorrador(EliminarBorradorException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "No se puede eliminar el evento",
                 List.of(ex.getMessage())
         );
 
