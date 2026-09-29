@@ -3,6 +3,7 @@ package com.aldo.event_pass.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,6 +40,17 @@ public class EventoAdminController {
     @PostMapping("/{eventoId}/publicar")
     public ResponseEntity<EventoResponse> publicarEvento(@PathVariable Long eventoId) {
         return ResponseEntity.ok(eventoAdminService.publicarEvento(eventoId));
+    }
+
+    @PostMapping("/{eventoId}/cancelar")
+    public ResponseEntity<EventoResponse> cancelarEvento(@PathVariable Long eventoId) {
+        return ResponseEntity.ok(eventoAdminService.cancelarEvento(eventoId));
+    }
+
+    @DeleteMapping("/{eventoId}")
+    public ResponseEntity<Void> eliminarBorrador(@PathVariable Long eventoId) {
+        eventoAdminService.eliminarBorrador(eventoId);
+        return ResponseEntity.noContent().build();
     }
     
 }
