@@ -10,4 +10,6 @@ public interface EventoAdminService {
     public EventoResponse crear(EventoRequest eventoRequest);
     public TipoBoletoResponse agregarTipoBoleto(Long eventoId, TipoBoletoRequest tipoBoletoRequest);
     public EventoResponse publicarEvento(Long eventoId);
+    public EventoResponse cancelarEvento(Long eventoId);
+    public void eliminarBorrador(Long eventoId);
 }
