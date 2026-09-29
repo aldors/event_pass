@@ -9,13 +9,18 @@ import org.springframework.transaction.annotation.Transactional;
 import com.aldo.event_pass.dto.boleto.BoletoResponse;
 import com.aldo.event_pass.dto.boleto.UsarBoletoResponse;
 import com.aldo.event_pass.entity.Boleto;
+import com.aldo.event_pass.entity.Compra;
 import com.aldo.event_pass.entity.Evento;
 import com.aldo.event_pass.entity.TipoBoleto;
 import com.aldo.event_pass.entity.Usuario;
 import com.aldo.event_pass.enums.EstadoBoleto;
+import com.aldo.event_pass.enums.EstadoCompra;
+import com.aldo.event_pass.enums.EstadoEvento;
 import com.aldo.event_pass.exception.BoletoInvalidadoException;
 import com.aldo.event_pass.exception.BoletoNoEncontradoException;
+import com.aldo.event_pass.exception.BoletoNoPagadoException;
 import com.aldo.event_pass.exception.BoletoUtilizadoException;
+import com.aldo.event_pass.exception.EventoCanceladoException;
 import com.aldo.event_pass.exception.EventoFinalizadoException;
 import com.aldo.event_pass.exception.PermisoDenegadoParaGenerarBoletoException;
 import com.aldo.event_pass.repository.BoletoRepository;
@@ -44,7 +49,10 @@ public class BoletoServiceImpl implements BoletoService {
 
         TipoBoleto tipoBoleto = boleto.getDetalleCompra().getTipoBoleto();
 
-        boolean valido = boleto.getEstado() == EstadoBoleto.ACTIVO;
+        boolean valido = boleto.getEstado() == EstadoBoleto.ACTIVO
+                && boleto.getDetalleCompra().getCompra().getEstado() == EstadoCompra.PAGADA
+                && evento.getEstado() == EstadoEvento.PUBLICADO
+                && evento.getFechaFin().isAfter(LocalDateTime.now());
 
         return new BoletoResponse(
                 evento.getNombre(),
@@ -71,11 +79,11 @@ public class BoletoServiceImpl implements BoletoService {
             throw new BoletoInvalidadoException();
         }
 
+        validarCompraPagada(boleto.getDetalleCompra().getCompra());
+
         Evento evento = boleto.getDetalleCompra().getTipoBoleto().getEvento();
 
-        if (evento.getFechaFin().isBefore(LocalDateTime.now())) {
-            throw new EventoFinalizadoException();
-        }
+        validarEventoVigente(evento);
 
         boleto.setEstado(EstadoBoleto.UTILIZADO);
 
@@ -105,7 +113,27 @@ public class BoletoServiceImpl implements BoletoService {
             throw new PermisoDenegadoParaGenerarBoletoException();
         }
 
+        validarCompraPagada(boleto.getDetalleCompra().getCompra());
+
+        validarEventoVigente(boleto.getDetalleCompra().getTipoBoleto().getEvento());
+
         return pdfService.generarPdf(boleto);
+    }
+
+    private void validarCompraPagada(Compra compra) {
+        if (compra.getEstado() != EstadoCompra.PAGADA) {
+            throw new BoletoNoPagadoException();
+        }
+    }
+
+    private void validarEventoVigente(Evento evento) {
+        if (evento.getEstado() == EstadoEvento.CANCELADO) {
+            throw new EventoCanceladoException();
+        }
+
+        if (evento.getEstado() == EstadoEvento.FINALIZADO || evento.getFechaFin().isBefore(LocalDateTime.now())) {
+            throw new EventoFinalizadoException();
+        }
     }
     
 }
