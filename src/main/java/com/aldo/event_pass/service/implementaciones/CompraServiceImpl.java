@@ -214,7 +214,7 @@ public class CompraServiceImpl implements CompraService {
 
         compraRepository.save(compra);
 
-        return new PagoResponse(compra.getId(), compra.getEstado(), compra.getTotal());
+        return new PagoResponse(compra.getId(), pago.getEstado(), pago.getMonto());
     }
     
 }
