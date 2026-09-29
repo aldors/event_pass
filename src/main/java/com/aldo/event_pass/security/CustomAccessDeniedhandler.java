@@ -14,7 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import tools.jackson.databind.ObjectMapper;
 
 @Component
-public class CustomAccessDeniedhandler implements AccessDeniedHandler{
+public class CustomAccessDeniedHandler implements AccessDeniedHandler{
 
 	@Override
 	public void handle(HttpServletRequest request,
