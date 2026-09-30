@@ -1,0 +1,501 @@
+/* =========================
+   OVERLAY
+========================= */
+
+.auth-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 100;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(16, 42, 45, 0.72);
+
+    backdrop-filter: blur(6px);
+}
+
+
+/* =========================
+   MODAL
+========================= */
+
+.auth-modal {
+    display: grid;
+
+    grid-template-columns: 0.8fr 1.2fr;
+
+    width: min(900px, 100%);
+
+    height: min(640px, calc(100vh - 40px));
+    max-height: calc(100vh - 40px);
+    min-height: 0;
+
+    overflow: hidden;
+
+    background: var(--cream-light);
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 25px 70px rgba(0, 0, 0, 0.25);
+}
+
+
+/* =========================
+   PANEL DECORATIVO
+========================= */
+
+.auth-decoration {
+    position: relative;
+
+    display: flex;
+
+    flex-direction: column;
+    justify-content: flex-end;
+
+    min-height: 0;
+    height: 100%;
+
+    padding: 45px;
+
+    overflow: hidden;
+
+    background: var(--dark);
+    color: var(--white);
+}
+
+
+.auth-decoration::before {
+    content: "";
+
+    position: absolute;
+
+    width: 230px;
+    height: 230px;
+
+    top: -70px;
+    right: -70px;
+
+    border-radius: 50%;
+
+    background: var(--orange);
+
+    opacity: 0.9;
+}
+
+
+.auth-decoration::after {
+    content: "";
+
+    position: absolute;
+
+    width: 180px;
+    height: 180px;
+
+    top: 110px;
+    left: -80px;
+
+    border-radius: 50%;
+
+    border: 2px solid rgba(255, 255, 255, 0.12);
+}
+
+
+.auth-decoration .eyebrow {
+    position: relative;
+    z-index: 2;
+}
+
+
+.auth-decoration h2 {
+    position: relative;
+    z-index: 2;
+
+    max-width: 300px;
+
+    margin-bottom: 15px;
+
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-size: 3.2rem;
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+}
+
+
+.auth-decoration p {
+    position: relative;
+    z-index: 2;
+
+    max-width: 300px;
+
+    color: #cbd5d1;
+
+    line-height: 1.5;
+}
+
+
+/* =========================
+   CONTENIDO
+========================= */
+
+.auth-content {
+    position: relative;
+
+    min-height: 0;
+    max-height: 100%;
+
+    padding: 42px;
+
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+
+.close-modal {
+    position: sticky;
+
+    top: 0;
+    margin-left: auto;
+    margin-right: -8px;
+    margin-bottom: -34px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 34px;
+    height: 34px;
+
+    border: none;
+    border-radius: 50%;
+
+    background: transparent;
+    color: var(--muted);
+
+    font-size: 1.7rem;
+    line-height: 1;
+
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+
+.close-modal:hover {
+    background: #ebe7df;
+    color: var(--dark);
+}
+
+
+/* =========================
+   TABS
+========================= */
+
+.auth-tabs {
+    display: flex;
+
+    gap: 28px;
+
+    margin-bottom: 32px;
+
+    border-bottom: 1px solid var(--border);
+}
+
+
+.auth-tab {
+    position: relative;
+
+    padding: 0 0 12px;
+
+    border: none;
+
+    background: transparent;
+    color: var(--muted);
+
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+
+.auth-tab::after {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    bottom: -1px;
+
+    width: 0;
+    height: 2px;
+
+    background: var(--orange);
+
+    transition: width 0.2s ease;
+}
+
+
+.auth-tab.active {
+    color: var(--dark);
+}
+
+
+.auth-tab.active::after {
+    width: 100%;
+}
+
+
+/* =========================
+   FORMULARIOS
+========================= */
+
+.auth-form {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 17px;
+}
+
+
+.auth-form-header {
+    margin-bottom: 8px;
+}
+
+
+.auth-form-header .eyebrow {
+    margin-bottom: 7px;
+}
+
+
+.auth-form-header h2 {
+    margin-bottom: 7px;
+
+    color: var(--dark);
+
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-size: 2.2rem;
+    line-height: 1;
+}
+
+
+.auth-form-header p {
+    color: var(--muted);
+
+    font-size: 0.95rem;
+}
+
+
+/* =========================
+   FILA NOMBRE / APELLIDO
+========================= */
+
+.form-row {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 14px;
+}
+
+
+/* =========================
+   INPUTS
+========================= */
+
+.form-group {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 6px;
+}
+
+
+.form-group label {
+    color: var(--dark);
+
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+
+.form-group input {
+    width: 100%;
+
+    min-height: 44px;
+
+    padding: 9px 12px;
+
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    outline: none;
+
+    background: var(--white);
+    color: var(--text);
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.form-group input:focus {
+    border-color: var(--orange);
+
+    box-shadow:
+        0 0 0 3px rgba(232, 117, 61, 0.12);
+}
+
+
+/* =========================
+   MENSAJES
+========================= */
+
+.auth-message {
+    width: 100%;
+
+    margin-top: 2px;
+    padding: 12px 14px;
+
+    border-radius: 9px;
+
+    font-size: 0.88rem;
+    line-height: 1.45;
+
+    scroll-margin-bottom: 12px;
+}
+
+
+.auth-message.error,
+.auth-message.success {
+    max-height: 160px;
+
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+
+.auth-message strong {
+    display: block;
+
+    margin-bottom: 5px;
+
+    font-family: "Bricolage Grotesque", sans-serif;
+}
+
+
+.auth-message ul {
+    margin: 5px 0 0;
+
+    padding-left: 20px;
+}
+
+
+.auth-message li {
+    margin-bottom: 3px;
+}
+
+
+.auth-message li:last-child {
+    margin-bottom: 0;
+}
+
+
+.auth-message.error {
+    background: #fbe9e5;
+
+    border: 1px solid #e9b7aa;
+
+    color: #8f3928;
+}
+
+
+.auth-message.success {
+    background: #e7f3ea;
+
+    border: 1px solid #b9d8c0;
+
+    color: #28633a;
+}
+
+
+/* =========================
+   RESPONSIVE
+======================== */
+
+@media (max-height: 700px) {
+
+    .auth-overlay {
+        align-items: flex-start;
+
+        overflow-y: auto;
+    }
+
+}
+
+
+@media (max-width: 800px) {
+
+    .auth-modal {
+        grid-template-columns: 1fr;
+    }
+
+
+    .auth-decoration {
+        display: none;
+    }
+
+
+    .auth-content {
+        padding: 35px;
+    }
+
+}
+
+
+@media (max-width: 500px) {
+
+    .auth-overlay {
+        padding: 10px;
+    }
+
+
+    .auth-modal {
+        height: min(640px, calc(100vh - 20px));
+        max-height: calc(100vh - 20px);
+
+        border-radius: 14px;
+    }
+
+
+    .auth-content {
+        padding: 30px 22px;
+    }
+
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+
+    .auth-form-header h2 {
+        font-size: 1.9rem;
+    }
+
+
+    .auth-tabs {
+        gap: 20px;
+    }
+
+}
