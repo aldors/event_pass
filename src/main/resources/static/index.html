@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="EventPass: descubre eventos, elige tus boletos y asegura tu lugar de forma sencilla.">
+
+    <title>EventPass — Descubre eventos y compra tus boletos</title>
+
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e8753d'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='sans-serif' font-size='18' font-weight='700' fill='white'%3EE%3C/text%3E%3C/svg%3E">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&family=Dosis:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="../static/css/styles.css">
+    <link rel="stylesheet" href="../static/css/event.css">
+    <link rel="stylesheet" href="../static/css/auth.css">
+</head>
+
+<body>
+
+<header class="navbar">
+
+    <a href="/" class="brand">
+        <span class="brand-mark" aria-hidden="true">E</span>
+        <span>EventPass</span>
+    </a>
+
+    <div class="navbar-auth">
+
+        <span id="saludoUsuario" class="saludo-usuario hidden"></span>
+
+        <button id="btnAuth" class="btn btn-outline" type="button">
+            Iniciar sesión
+        </button>
+
+        <button id="btnLogout" class="btn btn-dark hidden" type="button">
+            Cerrar sesión
+        </button>
+
+    </div>
+
+</header>
+
+
+<main>
+
+    <!-- HERO -->
+    <section class="hero">
+
+        <div class="hero-content">
+
+            <span class="eyebrow">
+                EXPERIENCIAS QUE SE VIVEN
+            </span>
+
+            <h1>
+                Tu próximo gran momento
+                <span>empieza aquí.</span>
+            </h1>
+
+            <p>
+                Descubre eventos, elige tus boletos y asegura tu lugar
+                de forma sencilla.
+            </p>
+
+            <a href="#eventos" class="btn btn-primary">
+                Explorar eventos
+            </a>
+
+        </div>
+
+        <div class="hero-decoration" aria-hidden="true">
+
+            <div class="ticket-decoration">
+                <span>EVENT</span>
+                <strong>PASS</strong>
+                <small>TU MOMENTO</small>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- EVENTOS -->
+    <section id="eventos" class="events-section" aria-labelledby="tituloEventos">
+
+        <div class="section-heading">
+
+            <div>
+                <span class="eyebrow">
+                    PRÓXIMOS EVENTOS
+                </span>
+
+                <h2 id="tituloEventos">
+                    Encuentra tu próximo evento
+                </h2>
+            </div>
+
+        </div>
+
+        <div id="contenedorEventos" class="events-grid" aria-live="polite">
+            <!-- Eventos generados mediante JavaScript -->
+        </div>
+
+    </section>
+
+
+    <!-- DETALLE DEL EVENTO -->
+    <section id="detalleEvento" class="event-detail hidden" aria-labelledby="detalleNombre">
+
+        <button id="cerrarDetalle" class="back-button" type="button">
+            ← Volver a eventos
+        </button>
+
+        <div class="detail-header">
+
+            <div>
+                <span class="eyebrow">
+                    EVENTO
+                </span>
+
+                <h2 id="detalleNombre"></h2>
+
+                <p id="detalleDescripcion"></p>
+            </div>
+
+        </div>
+
+
+        <div class="event-info-grid">
+
+            <div class="info-card">
+                <span>Ubicación</span>
+                <strong id="detalleUbicacion"></strong>
+            </div>
+
+            <div class="info-card">
+                <span>Inicio</span>
+                <strong id="detalleInicio"></strong>
+            </div>
+
+            <div class="info-card">
+                <span>Fin</span>
+                <strong id="detalleFin"></strong>
+            </div>
+
+            <div class="info-card">
+                <span>Máximo por usuario</span>
+                <strong id="detalleMaxBoletos"></strong>
+            </div>
+
+        </div>
+
+
+        <div class="ticket-types-section">
+
+            <div class="section-heading compact">
+
+                <div>
+                    <span class="eyebrow">
+                        BOLETOS
+                    </span>
+
+                    <h3>
+                        Elige tu tipo de boleto
+                    </h3>
+                </div>
+
+            </div>
+
+            <div id="tiposBoleto" class="ticket-types-grid" aria-live="polite">
+                <!-- Tipos de boleto generados mediante JavaScript -->
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- SOBRE EVENTPASS -->
+    <section class="about-section">
+
+        <div class="about-content">
+
+            <span class="eyebrow">
+                EVENTPASS
+            </span>
+
+            <h2>
+                Tu boleto.
+                Tu evento.
+                Tu momento.
+            </h2>
+
+            <p>
+                Una forma sencilla de descubrir eventos y adquirir
+                tus boletos desde un solo lugar.
+            </p>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<footer class="footer">
+    <span><strong>EventPass</strong> — Vive el momento.</span>
+</footer>
+
+
+<!-- MODAL AUTENTICACIÓN -->
+<div id="modalAuth" class="auth-overlay hidden">
+
+    <div class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="authDialogTitle">
+
+        <!-- PANEL DECORATIVO -->
+        <div class="auth-decoration" aria-hidden="true">
+
+            <span class="eyebrow">
+                EVENTPASS
+            </span>
+
+            <h2>
+                Vive el momento.
+            </h2>
+
+            <p>
+                Inicia sesión para continuar con tu compra.
+            </p>
+
+        </div>
+
+
+        <!-- CONTENIDO -->
+        <div class="auth-content">
+
+            <button
+                id="cerrarModal"
+                class="close-modal"
+                type="button"
+                aria-label="Cerrar diálogo de autenticación"
+            >
+                ×
+            </button>
+
+
+            <!-- TABS -->
+            <div class="auth-tabs" role="tablist" aria-label="Opciones de autenticación">
+
+                <button
+                    id="tabLogin"
+                    class="auth-tab active"
+                    type="button"
+                    role="tab"
+                    aria-selected="true"
+                >
+                    Iniciar sesión
+                </button>
+
+                <button
+                    id="tabRegistro"
+                    class="auth-tab"
+                    type="button"
+                    role="tab"
+                    aria-selected="false"
+                >
+                    Crear cuenta
+                </button>
+
+            </div>
+
+
+            <!-- LOGIN -->
+            <form id="loginForm" class="auth-form" novalidate>
+
+                <div class="auth-form-header">
+
+                    <span class="eyebrow">
+                        BIENVENIDO DE NUEVO
+                    </span>
+
+                    <h2 id="authDialogTitle">
+                        Inicia sesión
+                    </h2>
+
+                    <p>
+                        Accede a tu cuenta para continuar.
+                    </p>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="loginEmail">
+                        Email
+                    </label>
+
+                    <input
+                        type="email"
+                        id="loginEmail"
+                        autocomplete="email"
+                        maxlength="150"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="loginPassword">
+                        Contraseña
+                    </label>
+
+                    <input
+                        type="password"
+                        id="loginPassword"
+                        autocomplete="current-password"
+                        minlength="6"
+                        maxlength="100"
+                        required
+                    >
+
+                </div>
+
+
+                <div id="mensaje" class="auth-message hidden" role="alert"></div>
+
+
+                <button
+                    type="submit"
+                    class="btn btn-primary btn-full"
+                >
+                    Iniciar sesión
+                </button>
+
+            </form>
+
+
+            <!-- REGISTRO -->
+            <form id="registroForm" class="auth-form hidden" novalidate>
+
+                <div class="auth-form-header">
+
+                    <span class="eyebrow">
+                        NUEVA CUENTA
+                    </span>
+
+                    <h2>
+                        Crea tu cuenta
+                    </h2>
+
+                    <p>
+                        Regístrate para poder comprar tus boletos.
+                    </p>
+
+                </div>
+
+
+                <div class="form-row">
+
+                    <div class="form-group">
+
+                        <label for="nombre">
+                            Nombre
+                        </label>
+
+                        <input
+                            type="text"
+                            id="nombre"
+                            autocomplete="given-name"
+                            maxlength="60"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="apellido">
+                            Apellido
+                        </label>
+
+                        <input
+                            type="text"
+                            id="apellido"
+                            autocomplete="family-name"
+                            maxlength="60"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="registroEmail">
+                        Email
+                    </label>
+
+                    <input
+                        type="email"
+                        id="registroEmail"
+                        autocomplete="email"
+                        maxlength="150"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="registroPassword">
+                        Contraseña (mínimo 6 caracteres)
+                    </label>
+
+                    <input
+                        type="password"
+                        id="registroPassword"
+                        autocomplete="new-password"
+                        minlength="6"
+                        maxlength="100"
+                        required
+                    >
+
+                </div>
+
+
+                <div id="mensajeRegistro" class="auth-message hidden" role="alert"></div>
+
+
+                <button
+                    type="submit"
+                    class="btn btn-primary btn-full"
+                >
+                    Crear cuenta
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script type="module" src="../static/js/app.js"></script>
+
+</body>
+</html>
