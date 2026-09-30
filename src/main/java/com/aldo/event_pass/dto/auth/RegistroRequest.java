@@ -13,7 +13,7 @@ public class RegistroRequest {
     @NotBlank(message = "El nombre es obligarorio")
     private String nombre;
 
-    @NotBlank(message = "El nombre es obligarorio")
+    @NotBlank(message = "El apellido es obligarorio")
     private String apellido;
 
     @NotBlank(message = "El correo electrónico es obligatorio")
