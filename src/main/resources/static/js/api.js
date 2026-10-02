@@ -1,4 +1,5 @@
 import { API_BASE_URL, REQUEST_TIMEOUT_MS, STORAGE_KEYS } from "./config.js";
+import { obtenerTituloError } from "./utils.js";
 
 export class ApiError extends Error {
     constructor(message, { status = 0, data = null } = {}) {
@@ -61,7 +62,7 @@ export async function apiFetch(path, { method = "GET", body, auth = false, timeo
         const data = await parseJsonSafe(response);
 
         if (!response.ok) {
-            throw new ApiError(data?.titulo || `Error ${response.status}`, {
+            throw new ApiError(obtenerTituloError(data, `Error ${response.status}`), {
                 status: response.status,
                 data
             });

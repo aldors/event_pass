@@ -187,6 +187,26 @@
 }
 
 
+.events-error-list {
+    margin: 12px auto 0;
+
+    padding-left: 20px;
+
+    max-width: 480px;
+
+    color: #8f3928;
+
+    font-size: 0.95rem;
+    line-height: 1.5;
+    text-align: left;
+}
+
+
+.events-error-list li {
+    margin-bottom: 3px;
+}
+
+
 .error-state {
     border-color: #dfb4a9;
 }

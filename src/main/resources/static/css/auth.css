@@ -395,6 +395,11 @@
 }
 
 
+.auth-message p {
+    margin: 5px 0 0;
+}
+
+
 .auth-message ul {
     margin: 5px 0 0;
 
