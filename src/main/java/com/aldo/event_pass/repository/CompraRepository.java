@@ -1,5 +1,6 @@
 package com.aldo.event_pass.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -51,4 +52,13 @@ public interface CompraRepository extends JpaRepository<Compra, Long> {
     )
     """)
     int expirarReservasPorEvento(@Param("eventoId") Long eventoId);
+
+    List<Compra> findByUsuarioIdOrderByFechaCreacionDesc(Long usuarioId);
+
+    @Query("""
+    SELECT c FROM Compra c
+    WHERE c.id = :compraId
+    AND c.usuario.id = :usuarioId
+    """)
+    Optional<Compra> buscarMiCompra(@Param("compraId") Long compraId, @Param("usuarioId") Long usuarioId);
 }
