@@ -7,7 +7,7 @@ import {
     refreshTokens,
     ApiError
 } from "./api.js";
-import { setButtonLoading } from "./utils.js";
+import { setButtonLoading, obtenerListaErrores, agregarDetalleErrores } from "./utils.js";
 
 export const AUTH_REQUIRED_EVENT = "auth:required";
 export const AUTH_CHANGED_EVENT = "auth:changed";
@@ -17,6 +17,7 @@ const btnAuth = document.getElementById("btnAuth");
 const btnLogout = document.getElementById("btnLogout");
 const saludoUsuario = document.getElementById("saludoUsuario");
 const cerrarModal = document.getElementById("cerrarModal");
+const btnMisCompras = document.getElementById("btnMisCompras");
 
 const tabLogin = document.getElementById("tabLogin");
 const tabRegistro = document.getElementById("tabRegistro");
@@ -107,7 +108,7 @@ async function iniciarSesion(event) {
     const submitBtn = loginForm?.querySelector('button[type="submit"]');
 
     // Sin validación bloqueante en frontend: el backend es la única
-    // fuente de verdad y devuelve titulo + errors[] vía manejarApiError.
+    // fuente de verdad y devuelve message + errors[] vía manejarApiError.
     setButtonLoading(submitBtn, true, "Ingresando...");
     try {
         const data = await apiFetch("/auth/login", {
@@ -126,7 +127,7 @@ async function iniciarSesion(event) {
         if (error instanceof ApiError && error.status === 0) {
             mostrarMensaje(mensaje, "No se pudo conectar con el servidor.", "error");
         } else {
-            manejarApiError(error?.data, mensaje);
+            manejarApiError(error?.data, mensaje, "No se pudo iniciar sesión.");
         }
     } finally {
         setButtonLoading(submitBtn, false);
@@ -147,7 +148,7 @@ async function registrarUsuario(event) {
     const submitBtn = registroForm?.querySelector('button[type="submit"]');
 
     // Sin validación bloqueante en frontend: el backend es la única
-    // fuente de verdad y devuelve titulo + errors[] vía manejarApiError.
+    // fuente de verdad y devuelve message + errors[] vía manejarApiError.
     setButtonLoading(submitBtn, true, "Creando cuenta...");
     try {
         await apiFetch("/auth/registro", {
@@ -169,7 +170,7 @@ async function registrarUsuario(event) {
         if (error instanceof ApiError && error.status === 0) {
             mostrarMensaje(mensajeRegistro, "No se pudo conectar con el servidor.", "error");
         } else {
-            manejarApiError(error?.data, mensajeRegistro);
+            manejarApiError(error?.data, mensajeRegistro, "No se pudo crear tu cuenta.");
         }
     } finally {
         setButtonLoading(submitBtn, false);
@@ -254,11 +255,13 @@ function mostrarUsuarioAutenticado(nombre) {
         saludoUsuario.textContent = nombre ? `Hola, ${nombre}` : "Hola";
         saludoUsuario.classList.remove("hidden");
     }
+    btnMisCompras?.classList.remove("hidden");
     btnLogout?.classList.remove("hidden");
 }
 
 function mostrarUsuarioNoAutenticado() {
     saludoUsuario?.classList.add("hidden");
+    btnMisCompras?.classList.add("hidden");
     btnLogout?.classList.add("hidden");
     btnAuth?.classList.remove("hidden");
 }
@@ -266,24 +269,20 @@ function mostrarUsuarioNoAutenticado() {
 /* =========================
    ERRORES DE API
 ========================= */
-function manejarApiError(data, contenedor) {
+/*
+ * El título es fijo por contexto (no se muestra el `message` del backend).
+ * El detalle sí viene del backend: un error como texto simple,
+ * varios errores como lista.
+ */
+function manejarApiError(data, contenedor, tituloFijo = "Ocurrió un error.") {
     if (!contenedor) return;
     limpiarMensaje(contenedor);
 
-    const titulo = data?.titulo || "Ocurrió un error.";
     const mensajeTitulo = document.createElement("strong");
-    mensajeTitulo.textContent = titulo;
+    mensajeTitulo.textContent = tituloFijo;
     contenedor.appendChild(mensajeTitulo);
 
-    if (Array.isArray(data?.errors) && data.errors.length > 0) {
-        const listaErrores = document.createElement("ul");
-        data.errors.forEach((error) => {
-            const item = document.createElement("li");
-            item.textContent = String(error);
-            listaErrores.appendChild(item);
-        });
-        contenedor.appendChild(listaErrores);
-    }
+    agregarDetalleErrores(contenedor, obtenerListaErrores(data));
 
     contenedor.classList.remove("hidden");
     contenedor.classList.add("error");

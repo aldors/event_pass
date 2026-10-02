@@ -1,14 +1,17 @@
 import { apiFetch, getAccessToken, ApiError } from "./api.js";
 import { AUTH_REQUIRED_EVENT } from "./auth.js";
+import { abrirCompra } from "./compra.js";
 import {
     formatearFecha,
     formatearFechaCompleta,
     formatearDia,
     formatearMes,
-    formatearPrecio
+    formatearPrecio,
+    obtenerListaErrores
 } from "./utils.js";
 
 let eventosInitDone = false;
+let eventoActual = null;
 
 export function initEventos() {
     if (eventosInitDone) return;
@@ -114,11 +117,14 @@ export async function cargarDetalleEvento(eventoId) {
         mostrarDetalleEvento(data);
     } catch (error) {
         console.error("Error al cargar detalle:", error);
-        const mensaje =
-            error instanceof ApiError && error.status === 0
-                ? "No se pudo conectar con el servidor."
-                : error?.data?.titulo || "No fue posible cargar el evento.";
-        mostrarErrorDetalle(mensaje);
+        if (error instanceof ApiError && error.status === 0) {
+            mostrarErrorDetalle("No se pudo conectar con el servidor.", []);
+        } else {
+            mostrarErrorDetalle(
+                "No fue posible cargar el evento.",
+                obtenerListaErrores(error?.data)
+            );
+        }
     }
 }
 
@@ -160,6 +166,8 @@ function mostrarDetalleEvento(evento) {
         mostrarErrorDetalle("No fue posible cargar el evento.");
         return;
     }
+
+    eventoActual = evento;
 
     const set = (id, texto) => {
         const el = document.getElementById(id);
@@ -241,8 +249,12 @@ function intentarComprar(tipoBoleto) {
         return;
     }
 
-    // TODO: conectar con el flujo real de compra (/compras/**) cuando se defina la UI.
-    console.info("Usuario autenticado. Tipo de boleto:", tipoBoleto);
+    if (!eventoActual) {
+        console.error("No existe un evento seleccionado.");
+        return;
+    }
+    
+    abrirCompra(eventoActual, tipoBoleto);
 }
 
 /* =========================
@@ -286,13 +298,14 @@ function mostrarErrorEventos(mensaje) {
     contenedor.appendChild(estado);
 }
 
-function mostrarErrorDetalle(mensaje) {
+function mostrarErrorDetalle(mensaje, errores = []) {
     const set = (id, texto) => {
         const el = document.getElementById(id);
         if (el) el.textContent = texto;
     };
-    set("detalleNombre", "No fue posible cargar el evento");
-    set("detalleDescripcion", mensaje);
+    set("detalleNombre", mensaje);
+    // Un solo error va como descripción simple; varios se listan abajo.
+    set("detalleDescripcion", errores.length === 1 ? errores[0] : "");
     set("detalleUbicacion", "—");
     set("detalleInicio", "—");
     set("detalleFin", "—");
@@ -300,15 +313,26 @@ function mostrarErrorDetalle(mensaje) {
 
     const contenedor = document.getElementById("tiposBoleto");
     if (contenedor) {
-        // escaparHtml se usa solo si se interpola en HTML; aquí usamos textContent.
         contenedor.innerHTML = "";
         const estado = document.createElement("div");
         estado.className = "events-state error-state";
         const titulo = document.createElement("h3");
-        titulo.textContent = "No fue posible cargar el evento";
-        const texto = document.createElement("p");
-        texto.textContent = mensaje;
-        estado.append(titulo, texto);
+        titulo.textContent = mensaje;
+        estado.appendChild(titulo);
+        if (errores.length === 1) {
+            const texto = document.createElement("p");
+            texto.textContent = errores[0];
+            estado.appendChild(texto);
+        } else if (errores.length > 1) {
+            const lista = document.createElement("ul");
+            lista.className = "events-error-list";
+            errores.forEach((item) => {
+                const li = document.createElement("li");
+                li.textContent = item;
+                lista.appendChild(li);
+            });
+            estado.appendChild(lista);
+        }
         contenedor.appendChild(estado);
     }
 }
