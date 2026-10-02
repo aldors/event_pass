@@ -11,7 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.aldo.event_pass.dto.pago.PagoResponse;
+import com.aldo.event_pass.dto.boleto.BoletoDetalleResponse;
 import com.aldo.event_pass.dto.reservacion.BoletoReservaRequest;
+import com.aldo.event_pass.dto.reservacion.CompraDetalleResponse;
+import com.aldo.event_pass.dto.reservacion.CompraResumenResponse;
 import com.aldo.event_pass.dto.reservacion.ReservaResponse;
 import com.aldo.event_pass.dto.reservacion.ReservarBoletosRequest;
 import com.aldo.event_pass.entity.Boleto;
@@ -216,5 +219,98 @@ public class CompraServiceImpl implements CompraService {
 
         return new PagoResponse(compra.getId(), pago.getEstado(), pago.getMonto());
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CompraResumenResponse> obtenerCompras() {
+
+        Usuario usuario = currentUserService.obtenerUsuarioActual();
+
+        List<Compra> compras = compraRepository.findByUsuarioIdOrderByFechaCreacionDesc(usuario.getId());
+
+        return compras.stream()
+            .map(compra -> {
+
+                DetalleCompra primerDetalle = compra.getDetalles()
+                    .stream()
+                    .findFirst()
+                    .orElse(null);
+
+                String nombreEvento = primerDetalle != null
+                    ? primerDetalle.getTipoBoleto().getEvento().getNombre()
+                    : null;
+
+                Long eventoId = primerDetalle != null
+                    ? primerDetalle.getTipoBoleto().getEvento().getId()
+                    : null;
+
+                int cantidadBoletos = compra.getDetalles()
+                    .stream()
+                    .mapToInt(DetalleCompra::getCantidad)
+                    .sum();
+
+
+                return new CompraResumenResponse(
+                compra.getId(),
+                nombreEvento,
+                eventoId,
+                compra.getEstado(),
+                cantidadBoletos,
+                compra.getTotal(),
+                compra.getFechaCreacion(),
+                compra.getFechaExpiracionReserva()
+                );
+            })
+            .toList();
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public CompraDetalleResponse obtenerCompraPorId(Long compraId) {
+
+        Usuario usuario = currentUserService.obtenerUsuarioActual();
+
+        Compra compra = compraRepository.buscarMiCompra(compraId, usuario.getId())
+            .orElseThrow(() -> new CompraNoEncontradaException());
+
+        String nombreEvento = compra.getDetalles().stream()
+            .map(detalle -> detalle.getTipoBoleto().getEvento().getNombre())
+            .findFirst()
+            .orElse(null);
+
+        Long eventoId = compra.getDetalles().stream()
+            .map(detalle -> detalle.getTipoBoleto().getEvento().getId())
+            .findFirst()
+            .orElse(null);
+
+        int cantidadBoletos = compra.getDetalles().stream()
+            .mapToInt(DetalleCompra::getCantidad)
+            .sum();
+
+        List<BoletoDetalleResponse> boletos = compra.getDetalles().stream()
+            .flatMap(detalle -> detalle.getBoletos().stream()
+                .map(boleto -> new BoletoDetalleResponse(
+                    boleto.getId(),
+                    detalle.getTipoBoleto().getNombre(),
+                    boleto.getTitularNombre(),
+                    boleto.getFolio(),
+                    boleto.getEstado()
+                )))
+            .toList();
+
+        return new CompraDetalleResponse(
+            compra.getId(),
+            nombreEvento,
+            eventoId,
+            compra.getEstado(),
+            cantidadBoletos,
+            compra.getTotal(),
+            compra.getFechaCreacion(),
+            compra.getFechaExpiracionReserva(),
+            boletos
+        );
+    }
+    
     
 }
