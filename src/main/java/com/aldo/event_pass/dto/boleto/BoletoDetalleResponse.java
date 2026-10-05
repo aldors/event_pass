@@ -14,4 +14,9 @@ public class BoletoDetalleResponse {
     private String titularNombre;
     private String folio;
     private EstadoBoleto estado;
+    /*
+     * Indica si el PDF puede descargarse (compra pagada y evento vigente).
+     * El frontend solo lee este flag, no replica las reglas.
+     */
+    private boolean descargable;
 }

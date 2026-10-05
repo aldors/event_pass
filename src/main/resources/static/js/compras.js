@@ -1,7 +1,8 @@
 import {
     apiFetch,
     ApiError,
-    getAccessToken
+    getAccessToken,
+    descargarPdf
 } from "./api.js";
 
 import {
@@ -565,11 +566,6 @@ function mostrarBoletos(detalle) {
     boletos.forEach((boleto) => {
         listaBoletos.appendChild(crearTarjetaBoleto(boleto));
     });
-
-    const nota = document.createElement("p");
-    nota.className = "boletos-note";
-    nota.textContent = "La descarga en PDF estará disponible próximamente desde aquí.";
-    listaBoletos.appendChild(nota);
 }
 
 function crearTarjetaBoleto(boleto) {
@@ -600,14 +596,108 @@ function crearTarjetaBoleto(boleto) {
     estado.textContent = boleto?.estado ?? "—";
 
     const botonPdf = document.createElement("button");
+
     botonPdf.type = "button";
     botonPdf.className = "btn btn-secondary";
     botonPdf.textContent = "PDF";
-    botonPdf.disabled = true;
-    botonPdf.title = "La descarga en PDF estará disponible próximamente";
+    botonPdf.setAttribute(
+        "aria-label",
+        `Descargar PDF del boleto de ${boleto?.titularNombre ?? "sin titular"}`
+    );
+
+    // El backend decide vía `descargable` (compra pagada y evento vigente).
+    if (boleto?.descargable !== true) {
+        botonPdf.disabled = true;
+        botonPdf.title = "Disponible tras el pago";
+
+        const aviso = document.createElement("span");
+        aviso.className = "boleto-pdf-hint";
+        aviso.textContent = "Disponible tras el pago";
+        lateral.append(estado, botonPdf, aviso);
+        tarjeta.append(principal, lateral);
+
+        return tarjeta;
+    }
+
+    botonPdf.addEventListener("click", async () => {
+
+        if (!boleto?.boletoId) {
+            return;
+        }
+
+        limpiarErrorDescarga();
+        setButtonLoading(botonPdf, true, "Descargando...");
+
+        try {
+
+            const pdf = await descargarPdf(
+                `/boletos/${boleto.boletoId}/pdf`
+            );
+
+            const url = URL.createObjectURL(pdf);
+
+            const enlace = document.createElement("a");
+
+            enlace.href = url;
+            enlace.download = `boleto-${boleto.boletoId}.pdf`;
+
+            document.body.appendChild(enlace);
+            enlace.click();
+            enlace.remove();
+
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+        } catch (error) {
+
+            console.error("Error al descargar el PDF:", error);
+            mostrarErrorDescarga(error);
+
+        } finally {
+
+            setButtonLoading(botonPdf, false);
+        }
+    });
 
     lateral.append(estado, botonPdf);
     tarjeta.append(principal, lateral);
 
     return tarjeta;
+}
+
+
+/* =========================
+   ERROR DE DESCARGA (visible en el modal)
+========================= */
+
+function mostrarErrorDescarga(error) {
+    if (!listaBoletos) return;
+
+    limpiarErrorDescarga();
+
+    const titulo =
+        error instanceof ApiError && error.status === 0
+            ? "No se pudo conectar con el servidor."
+            : "No fue posible descargar el boleto.";
+
+    const errores =
+        error instanceof ApiError && error.status === 0
+            ? []
+            : obtenerListaErrores(error?.data);
+
+    const mensajeElemento = document.createElement("div");
+    mensajeElemento.className = "purchase-message error purchase-download-error";
+    mensajeElemento.setAttribute("role", "alert");
+
+    const tituloElemento = document.createElement("strong");
+    tituloElemento.textContent = titulo;
+    mensajeElemento.appendChild(tituloElemento);
+
+    agregarDetalleErrores(mensajeElemento, errores);
+
+    listaBoletos.prepend(mensajeElemento);
+    mensajeElemento.scrollIntoView({ block: "nearest" });
+}
+
+function limpiarErrorDescarga() {
+    listaBoletos?.querySelector(".purchase-download-error")?.remove();
 }

@@ -430,6 +430,19 @@
 }
 
 
+.boleto-pdf-hint {
+    color: var(--muted);
+
+    font-size: 0.78rem;
+    text-align: right;
+}
+
+
+.purchase-download-error {
+    margin-bottom: 16px;
+}
+
+
 .boletos-note {
     margin-top: 16px;
 

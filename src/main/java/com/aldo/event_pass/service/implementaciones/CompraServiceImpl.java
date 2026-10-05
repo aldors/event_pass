@@ -295,7 +295,8 @@ public class CompraServiceImpl implements CompraService {
                     detalle.getTipoBoleto().getNombre(),
                     boleto.getTitularNombre(),
                     boleto.getFolio(),
-                    boleto.getEstado()
+                    boleto.getEstado(),
+                    esDescargable(compra, detalle.getTipoBoleto().getEvento())
                 )))
             .toList();
 
@@ -310,6 +311,28 @@ public class CompraServiceImpl implements CompraService {
             compra.getFechaExpiracionReserva(),
             boletos
         );
+    }
+
+
+    /*
+     * Replica las reglas de BoletoServiceImpl.generarPdf sin lanzar:
+     * compra pagada y evento vigente (no cancelado/finalizado).
+     */
+    private boolean esDescargable(Compra compra, Evento evento) {
+
+        if (compra.getEstado() != EstadoCompra.PAGADA) {
+            return false;
+        }
+
+        if (evento.getEstado() == EstadoEvento.CANCELADO) {
+            return false;
+        }
+
+        if (evento.getEstado() == EstadoEvento.FINALIZADO || evento.getFechaFin().isBefore(LocalDateTime.now())) {
+            return false;
+        }
+
+        return true;
     }
     
     
