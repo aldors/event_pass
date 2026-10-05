@@ -1,0 +1,206 @@
+/* El reset base (box-sizing, márgenes) viene de styles.css. */
+
+body {
+    margin: 0;
+    min-height: 100vh;
+
+    font-family: var(--font-body);
+
+    background: var(--cream);
+    color: var(--text);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 24px;
+}
+
+.verification-page {
+    width: 100%;
+    max-width: 560px;
+}
+
+.verification-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+
+    padding: 32px;
+
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+.verification-header {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.verification-eyebrow {
+    display: block;
+
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+
+    color: var(--orange);
+
+    margin-bottom: 8px;
+}
+
+.verification-title {
+    margin: 0;
+
+    font-family: var(--font-display);
+    font-size: 30px;
+    line-height: 1.1;
+}
+
+.verification-status {
+    margin: 12px 0 0;
+
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.verification-status.valid {
+    color: #28633a;
+}
+
+.verification-status.invalid {
+    color: #8f3928;
+}
+
+.verification-data {
+    display: grid;
+    gap: 14px;
+
+    margin-top: 26px;
+}
+
+.verification-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+
+    padding-bottom: 12px;
+
+    border-bottom: 1px solid var(--border);
+}
+
+.verification-label {
+    color: var(--muted);
+    font-size: 15px;
+}
+
+.verification-value {
+    font-size: 16px;
+    font-weight: 600;
+    text-align: right;
+}
+
+.verification-message {
+    text-align: center;
+
+    margin: 0;
+
+    color: var(--muted);
+    font-size: 17px;
+}
+
+.verification-error {
+    text-align: center;
+}
+
+.verification-error h1 {
+    margin: 0 0 10px;
+
+    font-family: var(--font-display);
+    font-size: 28px;
+}
+
+.verification-error p {
+    margin: 0;
+
+    color: var(--muted);
+    font-size: 17px;
+}
+
+.verification-loading {
+    min-height: 180px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    gap: 12px;
+}
+
+.verification-loading p {
+    margin: 0;
+
+    color: var(--muted);
+    font-size: 17px;
+}
+
+.loading-dot {
+    width: 14px;
+    height: 14px;
+
+    border-radius: 50%;
+
+    background: var(--dark);
+
+    animation: pulse 1s infinite ease-in-out;
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 0.3;
+        transform: scale(0.85);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@media (max-width: 480px) {
+
+    body {
+        padding: 16px;
+    }
+
+    .verification-card {
+        padding: 24px 20px;
+    }
+
+    .verification-title {
+        font-size: 26px;
+    }
+
+    .verification-row {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .verification-value {
+        text-align: left;
+    }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+
+    .loading-dot {
+        animation: none;
+
+        opacity: 1;
+    }
+}

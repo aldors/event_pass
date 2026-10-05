@@ -42,7 +42,8 @@ public class PdfServiceImpl implements PdfService {
             
             TipoBoleto tipoBoleto = boleto.getDetalleCompra().getTipoBoleto();
 
-            String urlVerificacion = baseUrl + "/boletos/verificar/" + boleto.getCodigoQr();
+            //String urlVerificacion = baseUrl + "/boletos/verificar/" + boleto.getCodigoQr();
+            String urlVerificacion = baseUrl + "/verificar.html?codigoQr=" + boleto.getCodigoQr();
 
             byte[] qrBytes = qrService.generarQr(urlVerificacion);
 
