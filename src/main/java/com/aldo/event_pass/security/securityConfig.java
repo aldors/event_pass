@@ -51,6 +51,7 @@ public class SecurityConfig {
                         .requestMatchers("/verificar.html",
                                         "/css/**",
                                         "/js/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
