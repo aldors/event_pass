@@ -49,8 +49,8 @@ public class SecurityConfig {
                         .requestMatchers("/compras/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/eventos/**").permitAll()
                         .requestMatchers("/verificar.html",
-                                        "/css/verificar.css",
-                                        "/js/verificar.js").permitAll()
+                                        "/css/**",
+                                        "/js/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
