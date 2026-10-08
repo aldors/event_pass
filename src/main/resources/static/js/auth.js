@@ -30,6 +30,7 @@ const mensajeRegistro = document.getElementById("mensajeRegistro");
 
 let authInitDone = false;
 let lastFocusedElement = null;
+let usuarioActual = null;
 
 /* =========================
    INIT (llamado una vez desde app.js)
@@ -72,7 +73,7 @@ export async function inicializarSesion() {
 
     try {
         const usuario = await apiFetch("/auth/me", { auth: true });
-        mostrarUsuarioAutenticado(usuario?.nombre);
+        mostrarUsuarioAutenticado(usuario);
     } catch (error) {
         if (error instanceof ApiError && error.status === 401) {
             // Access expirado: intentar refresh una vez antes de cerrar sesión.
@@ -80,7 +81,7 @@ export async function inicializarSesion() {
             if (renovado) {
                 try {
                     const usuario = await apiFetch("/auth/me", { auth: true });
-                    mostrarUsuarioAutenticado(usuario?.nombre);
+                    mostrarUsuarioAutenticado(usuario);
                     return;
                 } catch {
                     // cae al logout silencioso
@@ -121,7 +122,6 @@ async function iniciarSesion(event) {
         loginForm.reset();
         cerrarModalAuth();
         await inicializarSesion();
-        window.dispatchEvent(new CustomEvent(AUTH_CHANGED_EVENT, { detail: { autenticado: true } }));
     } catch (error) {
         console.error("Error al iniciar sesión:", error);
         if (error instanceof ApiError && error.status === 0) {
@@ -199,7 +199,6 @@ async function cerrarSesion() {
         clearTokens();
         setButtonLoading(btnLogout, false);
         mostrarUsuarioNoAutenticado();
-        window.dispatchEvent(new CustomEvent(AUTH_CHANGED_EVENT, { detail: { autenticado: false } }));
     }
 }
 
@@ -249,21 +248,46 @@ function mostrarRegistro() {
 /* =========================
    ESTADO DE SESIÓN
 ========================= */
-function mostrarUsuarioAutenticado(nombre) {
+function mostrarUsuarioAutenticado(usuario) {
+
+    usuarioActual = usuario ?? null;
+
     btnAuth?.classList.add("hidden");
+
     if (saludoUsuario) {
-        saludoUsuario.textContent = nombre ? `Hola, ${nombre}` : "Hola";
+        saludoUsuario.textContent = usuario?.nombre ? `Hola, ${usuario.nombre}` : "Hola";
         saludoUsuario.classList.remove("hidden");
     }
     btnMisCompras?.classList.remove("hidden");
     btnLogout?.classList.remove("hidden");
+
+    window.dispatchEvent(
+        new CustomEvent(AUTH_CHANGED_EVENT, {
+            detail: {
+                autenticado: true,
+                usuario: usuarioActual
+            }
+        })
+    );
 }
 
 function mostrarUsuarioNoAutenticado() {
+
+    usuarioActual = null;
+
     saludoUsuario?.classList.add("hidden");
     btnMisCompras?.classList.add("hidden");
     btnLogout?.classList.add("hidden");
     btnAuth?.classList.remove("hidden");
+
+    window.dispatchEvent(
+        new CustomEvent(AUTH_CHANGED_EVENT, {
+            detail: {
+                autenticado: false,
+                usuario: null
+            }
+        })
+    );
 }
 
 /* =========================

@@ -9,4 +9,5 @@ public class MeResponse {
     
     private String nombre;
     private String email;
+    private String rol;
 }

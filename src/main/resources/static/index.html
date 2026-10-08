@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="css/auth.css">
     <link rel="stylesheet" href="css/compra.css">
     <link rel="stylesheet" href="css/compras.css">
+    <link rel="stylesheet" href="css/admin.css">
 </head>
 
 <body>
@@ -35,6 +36,10 @@
 
         <button id="btnMisCompras" class="btn btn-outline hidden" type="button">
             Mis compras
+        </button>
+
+        <button id="btnAdmin" class="btn btn-outline hidden" type="button">
+            Administración
         </button>
 
         <button id="btnAuth" class="btn btn-outline" type="button">
@@ -211,6 +216,263 @@
     </section>
 
 </main>
+
+<section id="panelAdmin" class="admin-section hidden" aria-labelledby="tituloAdmin">
+    <div class="admin-container">
+
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">
+                    ADMINISTRACIÓN
+                </span>
+
+                <h2 id="tituloAdmin">
+                    Panel de administración
+                </h2>
+
+                <p>
+                    Gestiona tus eventos y valida el acceso de los asistentes.
+                </p>
+            </div>
+        </div>
+
+        <div class="admin-tabs" role="tablist" aria-label="Secciones del panel de administración">
+            <button
+                id="tabAdminEventos"
+                class="admin-tab active"
+                type="button"
+                role="tab"
+                aria-selected="true"
+            >
+                Eventos
+            </button>
+
+            <button
+                id="tabAdminScanner"
+                class="admin-tab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+            >
+                Escáner QR
+            </button>
+        </div>
+
+        <div id="adminEventos" class="admin-panel">
+            <div class="admin-panel-header">
+                <div>
+                    <span class="eyebrow">
+                        EVENTOS
+                    </span>
+
+                    <h3>
+                        Gestión de eventos
+                    </h3>
+                </div>
+
+                <button
+                    id="btnCrearEvento"
+                    class="btn btn-primary"
+                    type="button"
+                >
+                    + Crear evento
+                </button>
+            </div>
+
+            <div id="listaAdminEventos" class="admin-events-grid" aria-live="polite">
+                <!-- Eventos generados mediante JavaScript -->
+            </div>
+
+            <div id="detalleAdminEvento" class="admin-event-detail hidden" aria-live="polite">
+                <!-- Detalle del evento generado mediante JavaScript -->
+            </div>
+
+            <div id="formCrearEvento" class="admin-form-container hidden">
+                <div class="admin-detail-header">
+                    <div>
+                        <span class="eyebrow">NUEVO EVENTO</span>
+                        <h3>Crear evento</h3>
+                        <p>
+                            Crea el evento como borrador. Después podrás configurar
+                            sus tipos de boleto y publicarlo.
+                        </p>
+                    </div>
+
+                    <button
+                        id="btnCerrarCrearEvento"
+                        class="btn btn-outline"
+                        type="button"
+                    >
+                        Cancelar
+                    </button>
+                </div>
+
+                <form id="crearEventoForm" novalidate>
+
+                    <div class="admin-form-grid">
+
+                        <div class="admin-form-group">
+                            <label for="eventoNombre">
+                                Nombre del evento
+                            </label>
+
+                            <input
+                                id="eventoNombre"
+                                name="nombre"
+                                type="text"
+                                maxlength="150"
+                                required
+                            >
+                        </div>
+
+                        <div class="admin-form-group">
+                            <label for="eventoUbicacion">
+                                Ubicación
+                            </label>
+
+                            <input
+                                id="eventoUbicacion"
+                                name="ubicacion"
+                                type="text"
+                                maxlength="200"
+                                required
+                            >
+                        </div>
+
+                        <div class="admin-form-group admin-form-group-full">
+                            <label for="eventoDescripcion">
+                                Descripción
+                            </label>
+
+                            <textarea
+                                id="eventoDescripcion"
+                                name="descripcion"
+                                rows="4"
+                                maxlength="1000"
+                                required
+                            ></textarea>
+                        </div>
+
+                        <div class="admin-form-group">
+                            <label for="eventoFechaInicio">
+                                Fecha de inicio
+                            </label>
+
+                            <input
+                                id="eventoFechaInicio"
+                                name="fechaInicio"
+                                type="datetime-local"
+                                required
+                            >
+                        </div>
+
+                        <div class="admin-form-group">
+                            <label for="eventoFechaFin">
+                                Fecha de fin
+                            </label>
+
+                            <input
+                                id="eventoFechaFin"
+                                name="fechaFin"
+                                type="datetime-local"
+                                required
+                            >
+                        </div>
+
+                        <div class="admin-form-group">
+                            <label for="eventoMaxBoletos">
+                                Máximo de boletos por usuario
+                            </label>
+
+                            <input
+                                id="eventoMaxBoletos"
+                                name="maxBoletosPorUsuario"
+                                type="number"
+                                min="1"
+                                value="5"
+                                required
+                            >
+                        </div>
+
+                    </div>
+
+                    <div
+                        id="mensajeCrearEvento"
+                        class="admin-form-message hidden"
+                        aria-live="polite"
+                    ></div>
+
+                    <div class="admin-form-actions">
+                        <button
+                            id="btnCancelarCrearEvento"
+                            class="btn btn-outline"
+                            type="button"
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                            id="btnGuardarEvento"
+                            class="btn btn-primary"
+                            type="submit"
+                        >
+                            Crear evento
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <div id="adminScanner" class="admin-panel hidden">
+
+            <div class="admin-panel-header">
+                <div>
+                    <span class="eyebrow">
+                        CONTROL DE ACCESO
+                    </span>
+
+                    <h3>
+                        Escáner de boletos
+                    </h3>
+
+                    <p>
+                        Escanea el código QR del boleto para verificarlo y
+                        permitir el acceso.
+                    </p>
+                </div>
+            </div>
+
+            <div id="scannerContainer" class="scanner-container">
+
+                <div class="scanner-placeholder">
+                    <span>
+                        El escáner QR estará disponible aquí.
+                    </span>
+
+                    <button
+                        id="btnIniciarScanner"
+                        class="btn btn-primary"
+                        type="button"
+                    >
+                        Iniciar escáner
+                    </button>
+                </div>
+
+            </div>
+
+            <div
+                id="resultadoScanner"
+                class="scanner-result hidden"
+                aria-live="polite"
+            >
+                <!-- Resultado de verificación generado mediante JavaScript -->
+            </div>
+
+        </div>
+
+    </div>
+</section>
 
 
 <footer class="footer">
@@ -580,6 +842,7 @@
     </div>
 </div>
 
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript"></script>
 <script type="module" src="js/app.js"></script>
 
 </body>

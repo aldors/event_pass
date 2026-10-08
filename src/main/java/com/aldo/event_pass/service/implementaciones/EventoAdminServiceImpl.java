@@ -1,12 +1,16 @@
 package com.aldo.event_pass.service.implementaciones;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.aldo.event_pass.dto.evento.EventoDetalleResponse;
+import com.aldo.event_pass.dto.evento.EventoListadoResponse;
 import com.aldo.event_pass.dto.evento.EventoRequest;
 import com.aldo.event_pass.dto.evento.EventoResponse;
+import com.aldo.event_pass.dto.tipo_boleto.TipoBoletoDisponibleResponse;
 import com.aldo.event_pass.dto.tipo_boleto.TipoBoletoRequest;
 import com.aldo.event_pass.dto.tipo_boleto.TipoBoletoResponse;
 import com.aldo.event_pass.entity.Evento;
@@ -25,6 +29,7 @@ import com.aldo.event_pass.mapper.EventoMapper;
 import com.aldo.event_pass.mapper.TipoBoletoMapper;
 import com.aldo.event_pass.repository.BoletoRepository;
 import com.aldo.event_pass.repository.CompraRepository;
+import com.aldo.event_pass.repository.DetalleCompraRepository;
 import com.aldo.event_pass.repository.EventoRepository;
 import com.aldo.event_pass.repository.TipoBoletoRepository;
 import com.aldo.event_pass.service.interfaces.EventoAdminService;
@@ -39,6 +44,7 @@ public class EventoAdminServiceImpl implements EventoAdminService {
     private final TipoBoletoRepository tipoBoletoRepository;
     private final BoletoRepository boletoRepository;
     private final CompraRepository compraRepository;
+    private final DetalleCompraRepository detalleCompraRepository;
 
     @Override
     @Transactional
@@ -135,6 +141,41 @@ public class EventoAdminServiceImpl implements EventoAdminService {
         }
 
         eventoRepository.delete(evento);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EventoListadoResponse> obtenerEventos() {
+        
+        return eventoRepository.findAllByOrderByFechaInicioAsc()
+            .stream()
+            .map(evento -> new EventoListadoResponse(
+                    evento.getId(),
+                    evento.getNombre(),
+                    evento.getUbicacion(),
+                    evento.getFechaInicio(),
+                    evento.getEstado()
+            ))
+            .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EventoDetalleResponse obtenerEventoPorId(Long eventoId) {
+
+        Evento evento = eventoRepository.findById(eventoId)
+            .orElseThrow(() -> new EventoNoEncontradoException());
+
+        List<TipoBoletoDisponibleResponse> tiposBoleto = evento.getTiposBoleto()
+            .stream()
+            .map(tipoBoleto -> {
+                Long ocupados = detalleCompraRepository.obtenerBoletosOcupados(tipoBoleto.getId());
+                int disponibles = Math.max(0, tipoBoleto.getCantidadTotal() - ocupados.intValue());
+                return TipoBoletoMapper.toDisponibleResponse(tipoBoleto, disponibles);
+            })
+            .toList();
+
+        return EventoMapper.toDetalleResponse(evento, tiposBoleto);
     }
     
 }

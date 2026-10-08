@@ -57,6 +57,7 @@ public class EventoMapper {
             evento.getFechaInicio(),
             evento.getFechaFin(),
             evento.getMaxBoletosPorUsuario(),
+            evento.getEstado(),
             tiposBoleto
         );
     }

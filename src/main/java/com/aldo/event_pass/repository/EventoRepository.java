@@ -14,4 +14,5 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
     
     List<Evento> findByEstadoOrderByFechaInicioAsc(EstadoEvento estado);
     List<Evento> findByEstadoAndFechaFinBefore(EstadoEvento estado, LocalDateTime fecha);
+    List<Evento> findAllByOrderByFechaInicioAsc();
 }

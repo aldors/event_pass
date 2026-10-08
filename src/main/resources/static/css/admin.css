@@ -1,0 +1,598 @@
+/* =========================
+   PANEL ADMIN
+========================= */
+
+.admin-section {
+    padding: 80px 24px;
+    background: #f7f4ef;
+}
+
+.admin-container {
+    width: min(1180px, 100%);
+    margin: 0 auto;
+}
+
+.admin-section .section-heading {
+    margin-bottom: 32px;
+}
+
+/* =========================
+   TABS
+========================= */
+
+.admin-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 32px;
+    border-bottom: 1px solid #ddd7cf;
+}
+
+.admin-tab {
+    border: none;
+    background: transparent;
+    padding: 12px 18px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #77716a;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition:
+        color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.admin-tab:hover {
+    color: #292724;
+}
+
+.admin-tab.active {
+    color: #292724;
+    border-bottom-color: #e8753d;
+}
+
+/* =========================
+   PANEL
+========================= */
+
+.admin-panel {
+    background: #ffffff;
+    border: 1px solid #e3ddd5;
+    border-radius: 18px;
+    padding: 28px;
+}
+
+.admin-panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 28px;
+}
+
+.admin-panel-header h3 {
+    margin: 6px 0 8px;
+    font-size: 1.6rem;
+}
+
+.admin-panel-header p {
+    margin: 0;
+    color: #77716a;
+    max-width: 620px;
+}
+
+/* =========================
+   EVENTOS ADMIN
+========================= */
+
+.admin-events-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.admin-event-card {
+    border: 1px solid #e3ddd5;
+    border-radius: 14px;
+    padding: 22px;
+    background: #fcfbf9;
+}
+
+.admin-event-card h4 {
+    margin: 0 0 8px;
+    font-size: 1.25rem;
+}
+
+.admin-event-card p {
+    margin: 5px 0;
+    color: #77716a;
+}
+
+.admin-event-status {
+    display: inline-flex;
+    margin-bottom: 14px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #eee9e2;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.admin-event-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+/* =========================
+   SCANNER
+========================= */
+
+.scanner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 280px;
+    border: 1px dashed #d5cec5;
+    border-radius: 16px;
+    background: #faf8f5;
+    overflow: hidden;
+}
+
+.scanner-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    text-align: center;
+    color: #77716a;
+}
+
+.scanner-result {
+    margin-top: 24px;
+    padding: 24px;
+    border: 1px solid #e3ddd5;
+    border-radius: 16px;
+    background: #ffffff;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 760px) {
+
+    .admin-section {
+        padding: 60px 18px;
+    }
+
+    .admin-panel {
+        padding: 20px;
+    }
+
+    .admin-panel-header {
+        flex-direction: column;
+    }
+
+    .admin-events-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-tabs {
+        overflow-x: auto;
+    }
+}
+
+.admin-message {
+    padding: 32px;
+    text-align: center;
+    border: 1px dashed #d5cec5;
+    border-radius: 14px;
+    background: #faf8f5;
+}
+
+.admin-message h4 {
+    margin: 0 0 8px;
+    font-size: 1.15rem;
+}
+
+.admin-message p {
+    margin: 0;
+    color: #77716a;
+}
+
+.admin-message-error {
+    text-align: left;
+    border-style: solid;
+}
+
+.admin-message-error h4 {
+    color: #9a3d2f;
+}
+
+.admin-error-list {
+    margin: 12px 0 0;
+    padding-left: 20px;
+    color: #9a3d2f;
+}
+
+.admin-event-detail {
+    margin-top: 28px;
+    padding-top: 28px;
+    border-top: 1px solid #e3ddd5;
+}
+
+.admin-detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 28px;
+}
+
+.admin-detail-header h3 {
+    margin: 6px 0 0;
+    font-size: 1.6rem;
+}
+
+.admin-detail-info {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 36px;
+}
+
+.admin-detail-field {
+    padding: 18px;
+    border: 1px solid #e3ddd5;
+    border-radius: 12px;
+    background: #fcfbf9;
+}
+
+.admin-detail-field span {
+    display: block;
+    margin-bottom: 7px;
+    color: #77716a;
+    font-size: .8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.admin-detail-field p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.admin-detail-section {
+    margin-top: 10px;
+}
+
+.admin-detail-section-header {
+    margin-bottom: 18px;
+}
+
+.admin-detail-section-header h4 {
+    margin: 6px 0 0;
+    font-size: 1.25rem;
+}
+
+.admin-ticket-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.admin-ticket-card {
+    padding: 20px;
+    border: 1px solid #e3ddd5;
+    border-radius: 14px;
+    background: #fcfbf9;
+}
+
+.admin-ticket-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.admin-ticket-card-header h5 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.admin-ticket-card-header span {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.admin-ticket-data {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.admin-ticket-data p {
+    margin: 0;
+    color: #77716a;
+}
+
+@media (max-width: 760px) {
+    .admin-detail-header {
+        flex-direction: column;
+    }
+
+    .admin-detail-info {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-ticket-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.admin-form-container {
+    margin-top: 28px;
+    padding-top: 28px;
+    border-top: 1px solid #e3ddd5;
+}
+
+.admin-form-container .admin-detail-header p {
+    margin: 8px 0 0;
+    color: #77716a;
+    max-width: 650px;
+}
+
+.admin-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.admin-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-form-group-full {
+    grid-column: 1 / -1;
+}
+
+.admin-form-group label {
+    font-size: .9rem;
+    font-weight: 600;
+}
+
+.admin-form-group input,
+.admin-form-group textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border: 1px solid #d8d1c8;
+    border-radius: 10px;
+    background: #fff;
+    color: #292724;
+    font: inherit;
+    outline: none;
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.admin-form-group textarea {
+    resize: vertical;
+}
+
+.admin-form-group input:focus,
+.admin-form-group textarea:focus {
+    border-color: #e8753d;
+    box-shadow: 0 0 0 3px rgba(232, 117, 61, .12);
+}
+
+.admin-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 28px;
+}
+
+.admin-form-message {
+    margin-top: 20px;
+    padding: 14px 16px;
+    border-radius: 10px;
+}
+
+.admin-form-message p {
+    margin: 0;
+}
+
+.admin-form-message-success {
+    background: #edf6ee;
+    border: 1px solid #cfe4d1;
+    color: #35653a;
+}
+
+.admin-form-message-error {
+    background: #f9eeee;
+    border: 1px solid #e8cccc;
+    color: #9a3d2f;
+}
+
+.admin-form-message-error .admin-error-list {
+    margin-top: 8px;
+}
+
+/* Título de contexto en negrita (igual que login/registro),
+   en bloque y separado del detalle. */
+.admin-form-message-error > strong,
+.scanner-message-error > strong {
+    display: block;
+    margin-bottom: 8px;
+}
+
+@media (max-width: 760px) {
+    .admin-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-form-group-full {
+        grid-column: auto;
+    }
+
+    .admin-form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .admin-form-actions .btn {
+        width: 100%;
+    }
+}
+
+/* =========================
+   RESULTADO DEL ESCÁNER
+========================= */
+
+.qr-reader {
+    width: 100%;
+    max-width: 480px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.qr-reader video {
+    width: 100%;
+    display: block;
+}
+
+.scanner-message {
+    padding: 32px;
+    text-align: center;
+    color: #77716a;
+}
+
+.scanner-message p {
+    margin: 0;
+}
+
+.scanner-message-error {
+    text-align: left;
+    border: 1px solid #e8cccc;
+    border-radius: 14px;
+    background: #f9eeee;
+}
+
+.scanner-message-error p {
+    color: #9a3d2f;
+    font-weight: 600;
+}
+
+.scanner-ticket-result {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.scanner-ticket-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.scanner-status-valid,
+.scanner-status-invalid {
+    display: inline-flex;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.scanner-status-valid {
+    background: #edf6ee;
+    border: 1px solid #cfe4d1;
+    color: #35653a;
+}
+
+.scanner-status-invalid {
+    background: #f9eeee;
+    border: 1px solid #e8cccc;
+    color: #9a3d2f;
+}
+
+.scanner-ticket-info {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.scanner-ticket-info > div {
+    padding: 14px;
+    border: 1px solid #e3ddd5;
+    border-radius: 12px;
+    background: #fcfbf9;
+}
+
+.scanner-ticket-info span {
+    display: block;
+    margin-bottom: 6px;
+    color: #77716a;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.scanner-ticket-info strong {
+    color: #292724;
+}
+
+.scanner-ticket-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.scanner-ticket-success {
+    border: 1px solid #cfe4d1;
+    border-radius: 14px;
+    background: #f4faf5;
+    padding: 24px;
+}
+
+.scanner-success-message p {
+    margin: 0;
+    color: #35653a;
+    font-weight: 600;
+}
+
+.admin-message-success {
+    text-align: left;
+    border-style: solid;
+    border-color: #cfe4d1;
+    background: #f4faf5;
+}
+
+.admin-message-success h4 {
+    color: #35653a;
+}
+
+.admin-detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 28px;
+}
+
+@media (max-width: 760px) {
+    .scanner-ticket-info {
+        grid-template-columns: 1fr;
+    }
+
+    .scanner-ticket-actions .btn {
+        width: 100%;
+    }
+}

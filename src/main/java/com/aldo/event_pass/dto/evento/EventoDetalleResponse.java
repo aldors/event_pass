@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.aldo.event_pass.dto.tipo_boleto.TipoBoletoDisponibleResponse;
+import com.aldo.event_pass.enums.EstadoEvento;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,5 +20,6 @@ public class EventoDetalleResponse {
     private LocalDateTime fechaInicio;
     private LocalDateTime fechaFin;
     private Integer maxBoletosPorUsuario;
+    private EstadoEvento estado;
     private List<TipoBoletoDisponibleResponse> tiposBoleto;
 }

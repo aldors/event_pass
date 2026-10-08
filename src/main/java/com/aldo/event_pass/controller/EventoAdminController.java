@@ -1,15 +1,20 @@
 package com.aldo.event_pass.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.aldo.event_pass.dto.evento.EventoDetalleResponse;
+import com.aldo.event_pass.dto.evento.EventoListadoResponse;
 import com.aldo.event_pass.dto.evento.EventoRequest;
 import com.aldo.event_pass.dto.evento.EventoResponse;
 import com.aldo.event_pass.dto.tipo_boleto.TipoBoletoRequest;
@@ -51,6 +56,16 @@ public class EventoAdminController {
     public ResponseEntity<Void> eliminarBorrador(@PathVariable Long eventoId) {
         eventoAdminService.eliminarBorrador(eventoId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/obtener")
+    public ResponseEntity<List<EventoListadoResponse>> obtenerEventos() {
+        return ResponseEntity.ok(eventoAdminService.obtenerEventos());
+    }
+
+    @GetMapping("/{eventoId}/obtener")
+    public ResponseEntity<EventoDetalleResponse> obtenerEventoPorId(@PathVariable Long eventoId) {
+        return ResponseEntity.ok(eventoAdminService.obtenerEventoPorId(eventoId));
     }
     
 }

@@ -137,7 +137,7 @@ public class AuthServiceImpl implements AuthService {
     public MeResponse me() {
 
         Usuario usuario = currentUserService.obtenerUsuarioActual();
-        return new MeResponse(usuario.getNombre(), usuario.getEmail());
+        return new MeResponse(usuario.getNombre(), usuario.getEmail(), usuario.getRol().name());
     }
     
 }
