@@ -6,10 +6,14 @@ export function escaparHtml(valor) {
 
 /*
  * El backend (ApiError.java) responde {status, message, timestamp, errors}.
- * Se acepta también `titulo` por compatibilidad con respuestas antiguas.
+ *
+ * REGLA DE PRESENTACIÓN (título fijo por contexto):
+ * El `message` del backend NUNCA se muestra como título. El título siempre
+ * lo define quien llama con un texto fijo según el contexto. El detalle
+ * visible sale únicamente de `errors` vía `agregarDetalleErrores`.
  */
-export function obtenerTituloError(data, fallback = "Ocurrió un error.") {
-    return data?.message || data?.titulo || fallback;
+export function obtenerTituloError(fallback = "Ocurrió un error.") {
+    return fallback;
 }
 
 export function obtenerListaErrores(data) {

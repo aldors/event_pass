@@ -57,7 +57,7 @@ export async function apiFetch(path, { method = "GET", body, auth = false, timeo
         const data = await parseJsonSafe(response);
 
         if (!response.ok) {
-            throw new ApiError(obtenerTituloError(data, `Error ${response.status}`), {
+            throw new ApiError(obtenerTituloError(`Error ${response.status}`), {
                 status: response.status,
                 data
             });
@@ -142,7 +142,7 @@ async function descargarPdfInterno(path, timeoutMs) {
         if (!response.ok) {
             const data = await parseJsonSafe(response);
             throw new ApiError(
-                obtenerTituloError(data, `Error ${response.status}`),
+                obtenerTituloError(`Error ${response.status}`),
                 {
                     status: response.status,
                     data
