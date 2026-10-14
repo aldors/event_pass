@@ -55,6 +55,9 @@ public class Pago {
     @Column(name = "id_pago_externo", nullable = false, length = 150)
     private String idPagoExterno;
 
+    @Column(name = "url_checkout", length = 1000)
+    private String urlCheckout;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal monto;
     
