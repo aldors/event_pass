@@ -18,12 +18,22 @@ public interface CompraRepository extends JpaRepository<Compra, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Compra> findByIdAndUsuarioId(Long compraId, Long usuarioId);
 
-    @Modifying
+    @Modifying(
+        flushAutomatically = true,
+        clearAutomatically = true
+    )
     @Query("""
     UPDATE Compra c
     SET c.estado = 'EXPIRADA'
     WHERE c.estado = 'RESERVADA'
     AND c.fechaExpiracionReserva < CURRENT_TIMESTAMP
+    AND NOT EXISTS (
+        SELECT p.id
+        FROM Pago p
+        WHERE p.compra = c
+            AND p.proveedor = 'STRIPE'
+            AND p.estado = 'PENDIENTE'
+    )
     """)
     int expirarReservasVencidas();
 
