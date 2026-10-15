@@ -6,5 +6,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public enum EstadoPago {
     PENDIENTE,
     APROBADO,
-    RECHAZADO
+    RECHAZADO,
+    EXPIRADO
 }
