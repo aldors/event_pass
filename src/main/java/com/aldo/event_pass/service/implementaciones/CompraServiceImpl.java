@@ -1,16 +1,18 @@
 package com.aldo.event_pass.service.implementaciones;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.aldo.event_pass.dto.pago.PagoResponse;
+import com.aldo.event_pass.dto.pago.CheckoutResponse;
 import com.aldo.event_pass.dto.boleto.BoletoDetalleResponse;
 import com.aldo.event_pass.dto.reservacion.BoletoReservaRequest;
 import com.aldo.event_pass.dto.reservacion.CompraDetalleResponse;
@@ -46,6 +48,10 @@ import com.aldo.event_pass.repository.PagoRepository;
 import com.aldo.event_pass.repository.TipoBoletoRepository;
 import com.aldo.event_pass.security.CurrentUserService;
 import com.aldo.event_pass.service.interfaces.CompraService;
+import com.stripe.StripeClient;
+import com.stripe.exception.StripeException;
+import com.stripe.model.checkout.Session;
+import com.stripe.param.checkout.SessionCreateParams;
 
 import lombok.RequiredArgsConstructor;
 
@@ -60,6 +66,17 @@ public class CompraServiceImpl implements CompraService {
     private final DetalleCompraRepository detalleCompraRepository;
     private final CompraRepository compraRepository;
     private final PagoRepository pagoRepository;
+    private final StripeClient stripeClient;
+    private final StripeWebhookService stripeWebhookService;
+
+    private static final int RESERVA_MINUTOS = 15;
+    private static final int STRIPE_SESION_MINUTOS = 30;
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
+
+    @Value("${app.stripe.currency:mxn}")
+    private String stripeCurrency;
 
     @Override
     @Transactional 
@@ -113,7 +130,7 @@ public class CompraServiceImpl implements CompraService {
         Compra compra = new Compra();
         compra.setUsuario(usuario);
         compra.setEstado(EstadoCompra.RESERVADA);
-        compra.setFechaExpiracionReserva(LocalDateTime.now().plusMinutes(15));
+        compra.setFechaExpiracionReserva(LocalDateTime.now().plusMinutes(RESERVA_MINUTOS));
         compra.setTotal(BigDecimal.ZERO);
 
         BigDecimal totalCompra = BigDecimal.ZERO;
@@ -184,7 +201,7 @@ public class CompraServiceImpl implements CompraService {
 
     @Override
     @Transactional
-    public PagoResponse pagar(Long compraId) {
+    public CheckoutResponse pagar(Long compraId) {
 
         Usuario usuario = currentUserService.obtenerUsuarioActual();
 
@@ -200,24 +217,162 @@ public class CompraServiceImpl implements CompraService {
             throw new ReservaExpiradaException();
         }
 
-        Pago pago = Pago.builder()
-            .compra(compra)
-            .proveedor("SIMULADO")
-            .idPagoExterno(UUID.randomUUID().toString())
-            .monto(compra.getTotal())
-            .estado(EstadoPago.APROBADO)
-            .fechaConfirmacion(LocalDateTime.now())
-            .build();
+        var pagoPendiente = pagoRepository.findFirstByCompraIdAndProveedorAndEstadoOrderByFechaCreacionDesc(
+            compraId,
+            "STRIPE",
+            EstadoPago.PENDIENTE
+        );
 
-        pagoRepository.save(pago);
+        if (pagoPendiente.isPresent()) {
+            Pago pago = pagoPendiente.get();
 
-        // Aquí la compra ya no esta 'reservada'
-        compra.setEstado(EstadoCompra.PAGADA);
-        compra.setFechaPago(LocalDateTime.now());
+            if (pago.getUrlCheckout() != null) {
+                final Session vigente;
+                try {
+                    vigente = stripeClient.v1().checkout().sessions().retrieve(pago.getIdPagoExterno());
+                } catch (StripeException e) {
+                    throw new RuntimeException("No fue posible validar la sesión de pago con Stripe.", e);
+                }
 
-        compraRepository.save(compra);
+                if ("open".equals(vigente.getStatus())) {
+                    return new CheckoutResponse(
+                        compra.getId(),
+                        pago.getEstado().name(),
+                        pago.getUrlCheckout()
+                    );
+                }
 
-        return new PagoResponse(compra.getId(), pago.getEstado(), pago.getMonto());
+                // La sesión ya no está abierta: reconciliar y decidir.
+                // Nunca se devuelve una URL muerta al frontend.
+                stripeWebhookService.procesarSesionReconciliada(vigente);
+
+                Compra actual = compraRepository.findByIdAndUsuarioId(compraId, usuario.getId())
+                    .orElseThrow(() -> new CompraNoEncontradaException());
+
+                if (actual.getEstado() == EstadoCompra.PAGADA) {
+                    throw new RuntimeException("La compra ya fue pagada");
+                }
+
+                throw new ReservaExpiradaException();
+            }
+        }
+
+        try {
+            List<DetalleCompra> detalles = detalleCompraRepository.findByCompraId(compra.getId());
+
+            if (detalles.isEmpty()) {
+                throw new IllegalStateException("La compra no contiene detalles.");
+            }
+
+            SessionCreateParams.Builder paramsBuilder = SessionCreateParams.builder()
+                    .setMode(SessionCreateParams.Mode.PAYMENT)
+                    .addAllowedPaymentMethodType(SessionCreateParams.AllowedPaymentMethodType.CARD)
+                    .setClientReferenceId(compra.getId().toString())
+                    .putMetadata(
+                        "compraId",
+                        compra.getId().toString()
+                    )
+                    .setSuccessUrl(
+                        frontendUrl
+                            + "/index.html?payment=success"
+                            + "&compra_id=" + compra.getId()
+                            + "&session_id={CHECKOUT_SESSION_ID}"
+                    )
+                    .setCancelUrl(
+                        frontendUrl
+                            + "/index.html?payment=cancelled"
+                            + "&compra_id=" + compra.getId()
+                    )
+                    .setExpiresAt(
+                        Instant.now()
+                            .plus(STRIPE_SESION_MINUTOS, ChronoUnit.MINUTES)
+                            .getEpochSecond()
+                    );
+
+            for (DetalleCompra detalle : detalles) {
+
+                long cantidad = detalle.getCantidad().longValue();
+
+                long precioEnCentavos = detalle
+                    .getPrecioUnitario()
+                    .movePointRight(2)
+                    .longValueExact();
+
+                if (cantidad <= 0 || precioEnCentavos < 0) {
+                    throw new IllegalStateException("La compra contiene cantidades o precios inválidos.");
+                }
+
+                SessionCreateParams.LineItem lineItem = SessionCreateParams.LineItem.builder()
+                        .setQuantity(cantidad)
+                        .setPriceData(
+                            SessionCreateParams.LineItem.PriceData.builder()
+                                .setCurrency(stripeCurrency.toLowerCase())
+                                .setUnitAmount(precioEnCentavos)
+                                .setProductData(
+                                    SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                        .setName(
+                                            detalle.getTipoBoleto().getNombre()
+                                        )
+                                        .build()
+                                )
+                                .build()
+                        )
+                        .build();
+
+                paramsBuilder.addLineItem(lineItem);
+            }
+
+            Session session = stripeClient.v1().checkout().sessions().create(paramsBuilder.build());
+
+            if (session.getUrl() == null) {
+                throw new IllegalStateException( "Stripe no devolvió una URL de checkout.");
+            }
+
+            Pago pago = Pago.builder()
+                .compra(compra)
+                .proveedor("STRIPE")
+                .idPagoExterno(session.getId())
+                .urlCheckout(session.getUrl())
+                .monto(compra.getTotal())
+                .estado(EstadoPago.PENDIENTE)
+                .build();
+
+            pagoRepository.save(pago);
+
+            compra.setFechaExpiracionReserva(LocalDateTime.now().plusMinutes(STRIPE_SESION_MINUTOS));
+
+            compraRepository.save(compra);
+
+            return new CheckoutResponse(compra.getId(), pago.getEstado().name(), pago.getUrlCheckout());
+        
+        } catch (StripeException e) {
+            throw new IllegalStateException("No fue posible iniciar el checkout con Stripe.", e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public CompraDetalleResponse verificarPago(Long compraId) {
+
+        Usuario usuario = currentUserService.obtenerUsuarioActual();
+
+        compraRepository.findByIdAndUsuarioId(compraId, usuario.getId())
+            .orElseThrow(() -> new CompraNoEncontradaException());
+
+        pagoRepository.findFirstByCompraIdAndProveedorAndEstadoOrderByFechaCreacionDesc(
+            compraId,
+            "STRIPE",
+            EstadoPago.PENDIENTE
+        ).ifPresent(pago -> {
+            try {
+                Session session = stripeClient.v1().checkout().sessions().retrieve(pago.getIdPagoExterno());
+                stripeWebhookService.procesarSesionReconciliada(session);
+            } catch (StripeException e) {
+                throw new RuntimeException("No fue posible verificar el pago con Stripe.", e);
+            }
+        });
+
+        return obtenerCompraPorId(compraId);
     }
 
     @Override

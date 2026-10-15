@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.aldo.event_pass.dto.pago.CheckoutResponse;
 import com.aldo.event_pass.dto.pago.PagoResponse;
 import com.aldo.event_pass.dto.reservacion.CompraDetalleResponse;
 import com.aldo.event_pass.dto.reservacion.CompraResumenResponse;
@@ -73,9 +74,14 @@ public class CompraController {
                 examples = @ExampleObject(name = "Error 409", value = "{\"status\":409,\"message\":\"Conflicto\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"Conflicto con el estado actual\"]}")))
     })
     @PostMapping("/{compraId}/pagar")
-    public ResponseEntity<PagoResponse> pagar(
+    public ResponseEntity<CheckoutResponse> pagar(
             @Parameter(description = "ID de la compra pendiente", example = "1") @PathVariable Long compraId){
         return ResponseEntity.ok(compraService.pagar(compraId));
+    }
+
+    @PostMapping("/{compraId}/verificar-pago")
+    public ResponseEntity<CompraDetalleResponse> verificarPago(@PathVariable Long compraId){
+        return ResponseEntity.ok(compraService.verificarPago(compraId));
     }
 
     @Operation(summary = "Listar mis compras", description = "Devuelve el historial resumido de compras del usuario autenticado.")
