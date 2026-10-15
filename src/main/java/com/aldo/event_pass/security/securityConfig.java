@@ -52,6 +52,7 @@ public class SecurityConfig {
                                         "/css/**",
                                         "/js/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/webhooks/stripe").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
