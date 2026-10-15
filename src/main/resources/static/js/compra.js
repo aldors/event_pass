@@ -663,12 +663,17 @@ async function pagarReserva(compraId, botonPago, totalTexto) {
     );
 
     try {
-        const pago = await apiFetch(`/compras/${compraId}/pagar`, {
+        const checkout = await apiFetch(`/compras/${compraId}/pagar`, {
             method: "POST",
             auth: true
         });
 
-        manejarPagoExitoso(pago);
+
+        if (!checkout?.checkoutUrl) {
+            throw new Error("No se recibió la URL de pago.");
+        }
+
+        window.location.assign(checkout.checkoutUrl);
 
     } catch (error) {
         console.error("Error al realizar el pago:", error);
@@ -679,7 +684,7 @@ async function pagarReserva(compraId, botonPago, totalTexto) {
                 "error"
             );
         } else {
-            manejarApiErrorPago(error?.data);
+            manejarApiErrorPago(error?.data, error?.status);
         }
 
         setButtonLoading(
@@ -853,13 +858,15 @@ function manejarApiErrorCompra(data) {
 /**
  * Muestra errores provenientes del pago.
  */
-function manejarApiErrorPago(data) {
+function manejarApiErrorPago(data, status) {
     if (!mensajeCompra) return;
 
     limpiarMensajeCompra();
 
     const titulo = document.createElement("strong");
-    titulo.textContent = "No fue posible realizar el pago.";
+    titulo.textContent = status === 409
+        ? "Esta compra ya no se puede pagar. Consulta Mis compras para ver su estado."
+        : "No fue posible realizar el pago.";
 
     mensajeCompra.appendChild(titulo);
 

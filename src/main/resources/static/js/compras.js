@@ -323,12 +323,16 @@ async function pagarCompra(compraId, totalTexto, boton) {
 
     try {
 
-        await apiFetch(`/compras/${compraId}/pagar`, {
+        const checkout = await apiFetch(`/compras/${compraId}/pagar`, {
             method: "POST",
             auth: true
         });
 
-        await cargarMisCompras();
+        if (!checkout?.checkoutUrl) {
+            throw new Error("No se recibió la URL de pago.");
+        }
+
+        window.location.assign(checkout.checkoutUrl);
 
     } catch (error) {
 
