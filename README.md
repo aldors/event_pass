@@ -42,7 +42,7 @@ Event Pass cubre el ciclo completo del boleto: un `ADMIN` crea el evento en `BOR
 ### 🛒 Reservas, pagos y compras (USER)
 - Reservar boletos solo en eventos `PUBLICADOS` → compra en `RESERVADA`.
 - **La reserva expira a los 15 minutos** si no se paga (ver Schedulers).
-- Pago **simulado** → compra `PAGADA` + boletos `ACTIVO` + registro de `Pago`.
+- Pago con **Stripe (test)** → compra `PAGADA` + registro de `Pago` (confirmado vía webhook, con reconciliación de respaldo).
 - Consultar `mis-compras` y detalle de compra.
 
 ### 🎫 Boletos digitales
@@ -141,7 +141,7 @@ Estados:
 
 - `EstadoEvento`: `BORRADOR`, `PUBLICADO`, `FINALIZADO`, `CANCELADO`
 - `EstadoCompra`: `RESERVADA`, `PAGADA`, `CANCELADA`, `EXPIRADA`
-- `EstadoPago`: `PENDIENTE`, `APROBADO`, `RECHAZADO`
+- `EstadoPago`: `PENDIENTE`, `APROBADO`, `RECHAZADO`, `EXPIRADO`
 - `EstadoBoleto`: `ACTIVO`, `UTILIZADO`, `INVALIDADO`
 
 ---
@@ -184,7 +184,8 @@ Base URL local: `http://localhost:8080`
 | Método | Endpoint | Acceso | Descripción |
 |---|---|---|---|
 | POST | `/compras/reservar-boletos` | `USER`, `ADMIN` | Crear reserva (TTL 15 min) |
-| POST | `/compras/{compraId}/pagar` | `USER`, `ADMIN` | Pagar reserva (simulado) |
+| POST | `/compras/{compraId}/pagar` | `USER`, `ADMIN` | Crear sesión de checkout en Stripe (expira en 30 min) |
+| POST | `/compras/{compraId}/verificar-pago` | `USER`, `ADMIN` | Reconciliar pago pendiente contra Stripe (respaldo si el webhook no llegó) |
 | GET | `/compras/mis-compras` | `USER`, `ADMIN` | Historial propio |
 | GET | `/compras/{compraId}` | `USER`, `ADMIN` | Detalle de compra propia |
 
@@ -258,6 +259,22 @@ app.base-url=http://TU_IP_LOCAL:8080
 
 > Genera un secreto largo y aleatorio para `jwt.secret` (mínimo 32 caracteres/256 bits). No lo subas al repo.
 
+### 2b. Configurar Stripe (modo test)
+
+```properties
+stripe.secret-key=sk_test_TU_CLAVE
+stripe.webhook-secret=whsec_TU_SECRETO
+app.frontend-url=http://127.0.0.1:5500/event_pass/src/main/resources/static
+```
+
+En local, reenvía los webhooks con Stripe CLI:
+
+```bash
+stripe listen --forward-to localhost:8080/webhooks/stripe
+```
+
+> Limitación actual: se procesan `checkout.session.completed/expired/async_payment_succeeded/async_payment_failed`. Los reembolsos (`charge.refunded`) se ignoran porque no se guarda el `payment_intent`.
+
 ### 3. Ejecutar
 
 ```bash
@@ -312,10 +329,11 @@ Flujo típico end-to-end:
 
 | Scheduler | Frecuencia (defecto) | Acción |
 |---|---|---|
-| `CompraScheduler` | cada 10 min (`600000` ms) | Expira reservas `RESERVADA` con más de 15 min → `EXPIRADA` |
+| `CompraScheduler` | cada 10 min (`600000` ms) | Expira reservas `RESERVADA` sin pago Stripe pendiente y con TTL vencido → `EXPIRADA` |
+| `StripeReconciliacionScheduler` | cada 5 min (`300000` ms) | Reconcilia pagos `PENDIENTE` con reserva vencida contra la API de Stripe (aprueba, expira o cierra la sesión) |
 | `EventoScheduler` | cada 30 min (`1800000` ms) | Finaliza eventos `PUBLICADO` con `fechaFin` pasada → `FINALIZADO`, invalida boletos no usados y expira sus reservas |
 
-Configurables con `app.schedulers.compra-expiracion-delay-ms` y `app.schedulers.evento-finalizacion-delay-ms`.
+Configurables con `app.schedulers.compra-expiracion-delay-ms`, `app.schedulers.stripe-reconciliation-delay-ms` y `app.schedulers.evento-finalizacion-delay-ms`.
 
 ---
 
@@ -337,10 +355,9 @@ El QR del PDF apunta a `app.base-url`. Para escanearlo desde un celular en la mi
 - [x] CRUD y publicación de eventos
 - [x] Reserva con expiración + schedulers
 - [x] Boleto PDF + QR + verificación/uso
-- [ ] Pago real (actualmente simulado)
+- [x] Pago con Stripe (modo test) + webhook + reconciliación
 - [ ] Paginación y filtros de eventos
 - [ ] Tests de integración
-- [ ] Despliegue con Docker
 
 ---
 
