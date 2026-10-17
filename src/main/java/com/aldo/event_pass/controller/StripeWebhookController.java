@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.aldo.event_pass.exception.WebhookNoAplicableException;
 import com.aldo.event_pass.service.implementaciones.StripeWebhookService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
@@ -58,7 +59,7 @@ public class StripeWebhookController {
 
         try {
             stripeWebhookService.procesarEvento(evento);
-        } catch (IllegalStateException e) {
+        } catch (WebhookNoAplicableException e) {
             log.warn("Webhook de Stripe no aplicable (se responde 200): {}", e.getMessage());
         }
 

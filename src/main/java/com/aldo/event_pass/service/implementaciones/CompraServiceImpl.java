@@ -31,14 +31,18 @@ import com.aldo.event_pass.enums.EstadoEvento;
 import com.aldo.event_pass.enums.EstadoPago;
 import com.aldo.event_pass.exception.TipoBoletoNoEncontradoException;
 import com.aldo.event_pass.exception.TipoBoletoNoPerteneceAlEventoException;
+import com.aldo.event_pass.exception.CompraInvalidaException;
 import com.aldo.event_pass.exception.CompraNoEncontradaException;
 import com.aldo.event_pass.exception.CompraNoReservadaException;
+import com.aldo.event_pass.exception.CompraVaciaException;
 import com.aldo.event_pass.exception.CompraYaPagadaException;
 import com.aldo.event_pass.exception.EventoIniciadoException;
 import com.aldo.event_pass.exception.EventoNoEncontradoException;
 import com.aldo.event_pass.exception.ExcederMaximosBoletosPorUsuarioException;
 import com.aldo.event_pass.exception.InsuficienciaDeBoletosException;
+import com.aldo.event_pass.exception.NoFuePosibleIniciarCheckoutException;
 import com.aldo.event_pass.exception.ReservaExpiradaException;
+import com.aldo.event_pass.exception.SesionDeCheckoutNoDevueltaException;
 import com.aldo.event_pass.exception.ReservarBoletosEnEventosPublicadosException;
 import com.aldo.event_pass.exception.StripeNoDisponibleException;
 import com.aldo.event_pass.exception.TipoBoletoInexistenteException;
@@ -274,7 +278,7 @@ public class CompraServiceImpl implements CompraService {
             List<DetalleCompra> detalles = detalleCompraRepository.findByCompraId(compra.getId());
 
             if (detalles.isEmpty()) {
-                throw new IllegalStateException("La compra no contiene detalles.");
+                throw new CompraVaciaException();
             }
 
             SessionCreateParams.Builder paramsBuilder = SessionCreateParams.builder()
@@ -312,7 +316,7 @@ public class CompraServiceImpl implements CompraService {
                     .longValueExact();
 
                 if (cantidad <= 0 || precioEnCentavos < 0) {
-                    throw new IllegalStateException("La compra contiene cantidades o precios inválidos.");
+                    throw new CompraInvalidaException();
                 }
 
                 SessionCreateParams.LineItem lineItem = SessionCreateParams.LineItem.builder()
@@ -338,7 +342,7 @@ public class CompraServiceImpl implements CompraService {
             Session session = stripeClient.v1().checkout().sessions().create(paramsBuilder.build());
 
             if (session.getUrl() == null) {
-                throw new IllegalStateException( "Stripe no devolvió una URL de checkout.");
+                throw new SesionDeCheckoutNoDevueltaException();
             }
 
             Pago pago = Pago.builder()
@@ -359,7 +363,7 @@ public class CompraServiceImpl implements CompraService {
             return new CheckoutResponse(compra.getId(), pago.getEstado().name(), pago.getUrlCheckout());
         
         } catch (StripeException e) {
-            throw new IllegalStateException("No fue posible iniciar el checkout con Stripe.", e);
+            throw new NoFuePosibleIniciarCheckoutException(e);
         }
     }
 

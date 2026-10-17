@@ -10,6 +10,13 @@ import com.aldo.event_pass.entity.Compra;
 import com.aldo.event_pass.entity.Pago;
 import com.aldo.event_pass.enums.EstadoCompra;
 import com.aldo.event_pass.enums.EstadoPago;
+import com.aldo.event_pass.exception.CompraNoValidaParaPagarException;
+import com.aldo.event_pass.exception.EventoDeWebhookNoAplicableException;
+import com.aldo.event_pass.exception.ImporteDePagoNoCoincidenteException;
+import com.aldo.event_pass.exception.SesionAbiertaException;
+import com.aldo.event_pass.exception.SesionDePagoInvalidaException;
+import com.aldo.event_pass.exception.SesionDePagoNoAsociadaException;
+import com.aldo.event_pass.exception.SesionNoCoincideConLaCompraException;
 import com.aldo.event_pass.exception.StripeNoDisponibleException;
 import com.aldo.event_pass.repository.CompraRepository;
 import com.aldo.event_pass.repository.PagoRepository;
@@ -35,7 +42,7 @@ public class StripeWebhookService {
     @Transactional
     public void procesarSesionReconciliada(Session session) {
         if (session == null || session.getStatus() == null) {
-            throw new IllegalStateException("Stripe no devolvió un estado válido para la sesión.");
+            throw new SesionDePagoInvalidaException();
         }
 
         switch (session.getStatus()) {
@@ -46,10 +53,10 @@ public class StripeWebhookService {
                 procesarSesionExpirada(session);
 
             case "open" ->
-                throw new IllegalStateException( "La sesión de Stripe todavía está abierta.");
+                throw new SesionAbiertaException();
 
             default ->
-                throw new IllegalStateException("Estado de Checkout no reconocido: " + session.getStatus());
+                throw new SesionDePagoInvalidaException(session.getStatus());
         }
     }
 
@@ -98,10 +105,10 @@ public class StripeWebhookService {
 
         StripeObject objeto = evento.getDataObjectDeserializer()
             .getObject()
-            .orElseThrow(() -> new IllegalStateException("No se pudo interpretar la sesión de Stripe."));
+            .orElseThrow(() -> new EventoDeWebhookNoAplicableException());
 
         if (!(objeto instanceof Session)) {
-            throw new IllegalStateException("El evento no contiene una sesión de Checkout.");
+            throw new EventoDeWebhookNoAplicableException();
         }
 
         return (Session) objeto;
@@ -110,7 +117,7 @@ public class StripeWebhookService {
     private void procesarPagoCompletado(Session session) {
 
         Pago pago = pagoRepository.buscarPagoConCompraParaWebhook("STRIPE", session.getId())
-            .orElseThrow(() -> new IllegalStateException("No existe un pago asociado a la sesión de Stripe."));
+            .orElseThrow(() -> new SesionDePagoNoAsociadaException());
 
         Compra compra = pago.getCompra();
 
@@ -122,7 +129,7 @@ public class StripeWebhookService {
         if (compraIdMetadata == null
                 || !compraId.toString().equals(compraIdMetadata)
                 || !compraId.toString().equals(session.getClientReferenceId())) {
-            throw new IllegalStateException("La sesión no coincide con la compra.");
+            throw new SesionNoCoincideConLaCompraException();
         }
 
         // Validar importe y moneda usando los valores de Stripe
@@ -134,7 +141,7 @@ public class StripeWebhookService {
         if (session.getAmountTotal() == null
                 || session.getAmountTotal() != totalEnCentavos
                 || !stripeCurrency.equalsIgnoreCase(session.getCurrency())) {
-            throw new IllegalStateException("El importe o la moneda del pago no coinciden.");
+            throw new ImporteDePagoNoCoincidenteException();
         }
 
         // Un evento duplicado no debe volver a aprobar el pago.
@@ -147,7 +154,7 @@ public class StripeWebhookService {
         }
 
         if (pago.getEstado() != EstadoPago.PENDIENTE || compra.getEstado() != EstadoCompra.RESERVADA) {
-            throw new IllegalStateException("La compra ya no está en un estado válido para pagar.");
+            throw new CompraNoValidaParaPagarException();
         }
 
         pago.setEstado(EstadoPago.APROBADO);
@@ -163,7 +170,7 @@ public class StripeWebhookService {
     private void procesarSesionExpirada(Session session) {
 
         Pago pago = pagoRepository.buscarPagoConCompraParaWebhook("STRIPE", session.getId())
-            .orElseThrow(() -> new IllegalStateException("No existe un pago asociado a la sesión expirada."));
+            .orElseThrow(() -> new SesionDePagoNoAsociadaException());
 
         Compra compra = pago.getCompra();
 
@@ -190,7 +197,7 @@ public class StripeWebhookService {
     private void procesarPagoFallido(Session session) {
 
         Pago pago = pagoRepository.buscarPagoConCompraParaWebhook("STRIPE", session.getId())
-            .orElseThrow(() -> new IllegalStateException("No existe un pago asociado a la sesión fallida."));
+            .orElseThrow(() -> new SesionDePagoNoAsociadaException());
 
         Compra compra = pago.getCompra();
 
