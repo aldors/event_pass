@@ -355,6 +355,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
     }
 
+    @ExceptionHandler(CompraYaPagadaException.class)
+    public ResponseEntity<ApiError> handleCompraYaPagada(CompraYaPagadaException ex) {
+
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "Compra ya pagada",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
     @ExceptionHandler(BoletoNoEncontradoException.class)
     public ResponseEntity<ApiError> handleBoletoNoEncontrado(BoletoNoEncontradoException ex) {
             
