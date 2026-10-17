@@ -10,6 +10,7 @@ import com.aldo.event_pass.entity.Compra;
 import com.aldo.event_pass.entity.Pago;
 import com.aldo.event_pass.enums.EstadoCompra;
 import com.aldo.event_pass.enums.EstadoPago;
+import com.aldo.event_pass.exception.StripeNoDisponibleException;
 import com.aldo.event_pass.repository.CompraRepository;
 import com.aldo.event_pass.repository.PagoRepository;
 import com.stripe.StripeClient;
@@ -89,7 +90,7 @@ public class StripeWebhookService {
         try {
             return stripeClient.v1().checkout().sessions().retrieve(delEvento.getId());
         } catch (StripeException e) {
-            throw new RuntimeException("No fue posible consultar la sesión en Stripe.", e);
+            throw new StripeNoDisponibleException("No fue posible consultar la sesión en Stripe.", e);
         }
     }
 
@@ -173,7 +174,13 @@ public class StripeWebhookService {
         if (pago.getEstado() == EstadoPago.PENDIENTE && compra.getEstado() == EstadoCompra.RESERVADA) {
 
             pago.setEstado(EstadoPago.EXPIRADO);
-            compra.setEstado(EstadoCompra.EXPIRADA);
+
+            // La compra solo expira si su reserva también venció: si la
+            // sesión murió antes (p. ej. expiración manual), la reserva
+            // sigue vigente y el usuario puede pagar de nuevo.
+            if (compra.getFechaExpiracionReserva().isBefore(java.time.LocalDateTime.now())) {
+                compra.setEstado(EstadoCompra.EXPIRADA);
+            }
 
             pagoRepository.save(pago);
             compraRepository.save(compra);

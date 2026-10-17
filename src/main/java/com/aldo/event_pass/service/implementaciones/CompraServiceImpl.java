@@ -33,12 +33,14 @@ import com.aldo.event_pass.exception.TipoBoletoNoEncontradoException;
 import com.aldo.event_pass.exception.TipoBoletoNoPerteneceAlEventoException;
 import com.aldo.event_pass.exception.CompraNoEncontradaException;
 import com.aldo.event_pass.exception.CompraNoReservadaException;
+import com.aldo.event_pass.exception.CompraYaPagadaException;
 import com.aldo.event_pass.exception.EventoIniciadoException;
 import com.aldo.event_pass.exception.EventoNoEncontradoException;
 import com.aldo.event_pass.exception.ExcederMaximosBoletosPorUsuarioException;
 import com.aldo.event_pass.exception.InsuficienciaDeBoletosException;
 import com.aldo.event_pass.exception.ReservaExpiradaException;
 import com.aldo.event_pass.exception.ReservarBoletosEnEventosPublicadosException;
+import com.aldo.event_pass.exception.StripeNoDisponibleException;
 import com.aldo.event_pass.exception.TipoBoletoInexistenteException;
 import com.aldo.event_pass.repository.BoletoRepository;
 import com.aldo.event_pass.repository.CompraRepository;
@@ -200,7 +202,9 @@ public class CompraServiceImpl implements CompraService {
     }
 
     @Override
-    @Transactional
+    // Los throws de negocio al final del reuse (ya-pagada / expirada)
+    // no deben revertir la reconciliación que se acabó de guardar.
+    @Transactional(noRollbackFor = {ReservaExpiradaException.class, CompraYaPagadaException.class})
     public CheckoutResponse pagar(Long compraId) {
 
         Usuario usuario = currentUserService.obtenerUsuarioActual();
@@ -208,6 +212,10 @@ public class CompraServiceImpl implements CompraService {
         // Se gurada la compra 'reservada'
         Compra compra = compraRepository.findByIdAndUsuarioId(compraId, usuario.getId())
             .orElseThrow(() -> new CompraNoEncontradaException());
+
+        if (compra.getEstado() == EstadoCompra.PAGADA) {
+            throw new CompraYaPagadaException();
+        }
 
         if(compra.getEstado() != EstadoCompra.RESERVADA){
             throw new CompraNoReservadaException();
@@ -231,7 +239,7 @@ public class CompraServiceImpl implements CompraService {
                 try {
                     vigente = stripeClient.v1().checkout().sessions().retrieve(pago.getIdPagoExterno());
                 } catch (StripeException e) {
-                    throw new RuntimeException("No fue posible validar la sesión de pago con Stripe.", e);
+                    throw new StripeNoDisponibleException("No fue posible validar la sesión de pago con Stripe.", e);
                 }
 
                 if ("open".equals(vigente.getStatus())) {
@@ -250,10 +258,15 @@ public class CompraServiceImpl implements CompraService {
                     .orElseThrow(() -> new CompraNoEncontradaException());
 
                 if (actual.getEstado() == EstadoCompra.PAGADA) {
-                    throw new RuntimeException("La compra ya fue pagada");
+                    throw new CompraYaPagadaException();
                 }
 
-                throw new ReservaExpiradaException();
+                if (actual.getFechaExpiracionReserva().isBefore(LocalDateTime.now())) {
+                    throw new ReservaExpiradaException();
+                }
+                // Sesión muerta pero reserva vigente: se sigue al flujo de
+                // creación y se genera una sesión nueva (el pago viejo quedó
+                // EXPIRADO y ya no estorba).
             }
         }
 
@@ -368,7 +381,7 @@ public class CompraServiceImpl implements CompraService {
                 Session session = stripeClient.v1().checkout().sessions().retrieve(pago.getIdPagoExterno());
                 stripeWebhookService.procesarSesionReconciliada(session);
             } catch (StripeException e) {
-                throw new RuntimeException("No fue posible verificar el pago con Stripe.", e);
+                throw new StripeNoDisponibleException("No fue posible verificar el pago con Stripe.", e);
             }
         });
 
