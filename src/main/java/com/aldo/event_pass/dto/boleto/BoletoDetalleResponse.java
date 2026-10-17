@@ -15,7 +15,7 @@ public class BoletoDetalleResponse {
     private Long boletoId;
     @Schema(description = "Nombre del tipo de boleto", example = "General")
     private String tipoBoletoNombre;
-    @Schema(description = "Titular del boleto", example = "Aldo Rojas")
+    @Schema(description = "Titular del boleto", example = "Aldo Ruiz")
     private String titularNombre;
     @Schema(description = "Folio / código QR", example = "EVT-AB12CD34")
     private String folio;

@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.aldo.event_pass.dto.pago.CheckoutResponse;
-import com.aldo.event_pass.dto.pago.PagoResponse;
 import com.aldo.event_pass.dto.reservacion.CompraDetalleResponse;
 import com.aldo.event_pass.dto.reservacion.CompraResumenResponse;
 import com.aldo.event_pass.dto.reservacion.ReservaResponse;
@@ -60,18 +59,20 @@ public class CompraController {
         return ResponseEntity.ok(compraService.reservarBoletos(reservarBoletosRequest));
     }
 
-    @Operation(summary = "Pagar compra", description = "Marca una compra pendiente como pagada y genera los boletos con QR. Requiere rol USER o ADMIN.")
+    @Operation(summary = "Pagar compra", description = "Crea una sesión de checkout en Stripe (expira en 30 min) y devuelve la URL de pago. Si ya existe una sesión vigente, la reutiliza. Requiere rol USER o ADMIN.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Pago registrado",
-            content = @Content(schema = @Schema(implementation = PagoResponse.class))),
+        @ApiResponse(responseCode = "200", description = "Sesión de checkout creada",
+            content = @Content(schema = @Schema(implementation = CheckoutResponse.class))),
         @ApiResponse(responseCode = "401", description = "No autenticado"),
-        @ApiResponse(responseCode = "403", description = "La compra no pertenece al usuario"),
         @ApiResponse(responseCode = "404", description = "Compra no encontrada",
             content = @Content(schema = @Schema(implementation = ApiError.class),
                 examples = @ExampleObject(name = "Error 404", value = "{\"status\":404,\"message\":\"Recurso no encontrado\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"Recurso no encontrado\"]}"))),
-        @ApiResponse(responseCode = "409", description = "La compra ya fue pagada o expiró",
+        @ApiResponse(responseCode = "409", description = "La compra ya fue pagada, no está reservada o la reserva expiró",
             content = @Content(schema = @Schema(implementation = ApiError.class),
-                examples = @ExampleObject(name = "Error 409", value = "{\"status\":409,\"message\":\"Conflicto\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"Conflicto con el estado actual\"]}")))
+                examples = @ExampleObject(name = "Error 409", value = "{\"status\":409,\"message\":\"Conflicto\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"Conflicto con el estado actual\"]}"))),
+        @ApiResponse(responseCode = "500", description = "Error interno o fallo transitorio al contactar Stripe",
+            content = @Content(schema = @Schema(implementation = ApiError.class),
+                examples = @ExampleObject(name = "Error 500", value = "{\"status\":500,\"message\":\"Error interno del servidor\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"Ocurrió un error inesperado\"]}")))
     })
     @PostMapping("/{compraId}/pagar")
     public ResponseEntity<CheckoutResponse> pagar(
@@ -79,8 +80,21 @@ public class CompraController {
         return ResponseEntity.ok(compraService.pagar(compraId));
     }
 
+    @Operation(summary = "Verificar pago", description = "Reconcilia contra Stripe el pago pendiente de la compra y devuelve el detalle actualizado. Sirve como respaldo si el webhook no llegó. Es idempotente. Requiere rol USER o ADMIN.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Detalle de la compra",
+            content = @Content(schema = @Schema(implementation = CompraDetalleResponse.class))),
+        @ApiResponse(responseCode = "401", description = "No autenticado"),
+        @ApiResponse(responseCode = "404", description = "Compra no encontrada",
+            content = @Content(schema = @Schema(implementation = ApiError.class),
+                examples = @ExampleObject(name = "Error 404", value = "{\"status\":404,\"message\":\"Recurso no encontrado\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"Recurso no encontrado\"]}"))),
+        @ApiResponse(responseCode = "500", description = "Error interno o fallo transitorio al contactar Stripe",
+            content = @Content(schema = @Schema(implementation = ApiError.class),
+                examples = @ExampleObject(name = "Error 500", value = "{\"status\":500,\"message\":\"Error interno del servidor\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"Ocurrió un error inesperado\"]}")))
+    })
     @PostMapping("/{compraId}/verificar-pago")
-    public ResponseEntity<CompraDetalleResponse> verificarPago(@PathVariable Long compraId){
+    public ResponseEntity<CompraDetalleResponse> verificarPago(
+            @Parameter(description = "ID de la compra a verificar", example = "1") @PathVariable Long compraId){
         return ResponseEntity.ok(compraService.verificarPago(compraId));
     }
 
