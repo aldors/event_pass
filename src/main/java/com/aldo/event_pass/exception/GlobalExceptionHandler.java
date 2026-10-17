@@ -499,4 +499,148 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiError);
     }
 
+    @ExceptionHandler(CompraVaciaException.class)
+    public ResponseEntity<ApiError> handleCompraVacia(CompraVaciaException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "La compra no contiene detalles",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(CompraInvalidaException.class)
+    public ResponseEntity<ApiError> handleCompraInvalida(CompraInvalidaException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "La compra contiene datos inválidos",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(CompraNoValidaParaPagarException.class)
+    public ResponseEntity<ApiError> handleCompraNoValidaParaPagar(CompraNoValidaParaPagarException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "La compra no está en un estado válido para pagar",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(SesionNoCoincideConLaCompraException.class)
+    public ResponseEntity<ApiError> handleSesionNoCoincideConLaCompra(SesionNoCoincideConLaCompraException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "La sesión de pago no coincide con la compra",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(ImporteDePagoNoCoincidenteException.class)
+    public ResponseEntity<ApiError> handleImporteDePagoNoCoincidente(ImporteDePagoNoCoincidenteException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "El importe o la moneda del pago no coinciden",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(SesionAbiertaException.class)
+    public ResponseEntity<ApiError> handleSesionAbierta(SesionAbiertaException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "La sesión de pago todavía está abierta",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(SesionDePagoNoAsociadaException.class)
+    public ResponseEntity<ApiError> handleSesionDePagoNoAsociada(SesionDePagoNoAsociadaException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.NOT_FOUND.value(),
+                "No existe un pago asociado a la sesión",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
+    }
+
+    @ExceptionHandler(SesionDeCheckoutNoDevueltaException.class)
+    public ResponseEntity<ApiError> handleSesionDeCheckoutNoDevuelta(SesionDeCheckoutNoDevueltaException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.BAD_GATEWAY.value(),
+                "Stripe no devolvió una URL de checkout",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(apiError);
+    }
+
+    @ExceptionHandler(NoFuePosibleIniciarCheckoutException.class)
+    public ResponseEntity<ApiError> handleNoFuePosibleIniciarCheckout(NoFuePosibleIniciarCheckoutException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.BAD_GATEWAY.value(),
+                "No fue posible iniciar el pago con Stripe",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(apiError);
+    }
+
+    @ExceptionHandler(SesionDePagoInvalidaException.class)
+    public ResponseEntity<ApiError> handleSesionDePagoInvalida(SesionDePagoInvalidaException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.BAD_GATEWAY.value(),
+                "Stripe devolvió una sesión de pago inválida",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(apiError);
+    }
+
+    @ExceptionHandler(EventoDeWebhookNoAplicableException.class)
+    public ResponseEntity<ApiError> handleEventoDeWebhookNoAplicable(EventoDeWebhookNoAplicableException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.BAD_GATEWAY.value(),
+                "No se pudo interpretar el evento de Stripe",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(apiError);
+    }
+
+    @ExceptionHandler(StripeNoDisponibleException.class)
+    public ResponseEntity<ApiError> handleStripeNoDisponible(StripeNoDisponibleException ex) {
+            
+        ApiError apiError = new ApiError(
+                HttpStatus.BAD_GATEWAY.value(),
+                "El servicio de pagos no está disponible",
+                List.of(ex.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(apiError);
+    }
+
 }
