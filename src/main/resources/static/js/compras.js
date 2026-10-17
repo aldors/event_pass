@@ -451,7 +451,9 @@ function mostrarErrorPago(error) {
     const titulo =
         error instanceof ApiError && error.status === 0
             ? "No se pudo conectar con el servidor."
-            : "No fue posible procesar el pago.";
+            : error instanceof ApiError && error.status === 409
+                ? "Esta compra ya no se puede pagar. Revisa su estado actual."
+                : "No fue posible procesar el pago.";
 
     const errores =
         error instanceof ApiError && error.status === 0
@@ -477,6 +479,11 @@ function mostrarErrorPago(error) {
     agregarDetalleErrores(mensajeElemento, errores);
 
     listaMisCompras.prepend(mensajeElemento);
+
+    mensajeElemento.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest"
+    });
 }
 
 
