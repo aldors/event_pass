@@ -1,5 +1,5 @@
 import { apiFetch, getAccessToken, ApiError } from "./api.js";
-import { AUTH_REQUIRED_EVENT } from "./auth.js";
+import { AUTH_REQUIRED_EVENT, AUTH_CHANGED_EVENT } from "./auth.js";
 import { abrirCompra } from "./compra.js";
 import {
     formatearFecha,
@@ -12,11 +12,27 @@ import {
 
 let eventosInitDone = false;
 let eventoActual = null;
+let esAdmin = false;
+let eventosRequestId = 0;
 
 export function initEventos() {
     if (eventosInitDone) return;
     eventosInitDone = true;
     document.getElementById("cerrarDetalle")?.addEventListener("click", volverAEventos);
+    window.addEventListener(AUTH_CHANGED_EVENT, manejarCambioAuthEventos);
+}
+
+/*
+ * El ADMIN ve en la pantalla principal todos los eventos, mientras que el
+ * USER y anónimo siguen usando el catálogo público.
+ */
+function manejarCambioAuthEventos(event) {
+    const admin = event.detail?.autenticado === true && event.detail?.usuario?.rol === "ADMIN";
+
+    if (admin === esAdmin) return;
+
+    esAdmin = admin;
+    cargarEventos();
 }
 
 /* =========================
@@ -26,10 +42,18 @@ export async function cargarEventos() {
     const contenedor = document.getElementById("contenedorEventos");
     if (!contenedor) return;
 
+    const requestId = ++eventosRequestId;
+
     mostrarCargandoEventos();
 
     try {
-        const eventos = await apiFetch("/eventos/obtener");
+        const eventos = esAdmin
+            ? await apiFetch("/admin/eventos/obtener", { auth: true })
+            : await apiFetch("/eventos/obtener");
+
+        // Ignorar respuestas obsoletas (la carga inicial pública puede
+        // resolverse después de la recarga de administrador).
+        if (requestId !== eventosRequestId) return;
 
         if (!Array.isArray(eventos) || eventos.length === 0) {
             mostrarEventosVacios();
@@ -39,6 +63,8 @@ export async function cargarEventos() {
         contenedor.innerHTML = "";
         eventos.forEach((evento) => contenedor.appendChild(crearTarjetaEvento(evento)));
     } catch (error) {
+        if (requestId !== eventosRequestId) return;
+
         console.error("Error al cargar eventos:", error);
         mostrarErrorEventos(
             error instanceof ApiError && error.status === 0
@@ -113,7 +139,10 @@ export async function cargarDetalleEvento(eventoId) {
     detalle.scrollIntoView({ behavior: "smooth", block: "start" });
 
     try {
-        const data = await apiFetch(`/eventos/${eventoId}/obtener`);
+        const data = esAdmin
+            ? await apiFetch(`/admin/eventos/${eventoId}/obtener`, { auth: true })
+            : await apiFetch(`/eventos/${eventoId}/obtener`);
+
         mostrarDetalleEvento(data);
     } catch (error) {
         console.error("Error al cargar detalle:", error);
@@ -181,16 +210,18 @@ function mostrarDetalleEvento(evento) {
     set("detalleFin", formatearFechaCompleta(evento.fechaFin));
     set("detalleMaxBoletos", evento.maxBoletosPorUsuario ?? "—");
 
-    mostrarTiposBoleto(evento.tiposBoleto);
+    mostrarTiposBoleto(evento.tiposBoleto, evento.estado);
 }
 
 /* =========================
    TIPOS DE BOLETO
 ========================= */
-function mostrarTiposBoleto(tiposBoleto) {
+function mostrarTiposBoleto(tiposBoleto, estadoEvento) {
     const contenedor = document.getElementById("tiposBoleto");
     if (!contenedor) return;
     contenedor.innerHTML = "";
+
+    const eventoPublicado = estadoEvento === "PUBLICADO";
 
     if (!Array.isArray(tiposBoleto) || tiposBoleto.length === 0) {
         contenedor.innerHTML = `
@@ -202,9 +233,19 @@ function mostrarTiposBoleto(tiposBoleto) {
         return;
     }
 
+    if (!eventoPublicado) {
+        const aviso = document.createElement("div");
+        aviso.className = "events-state";
+        aviso.innerHTML = `
+            <p>Este evento no está publicado. Solo los eventos publicados permiten la compra de boletos.</p>
+        `;
+        contenedor.appendChild(aviso);
+    }
+
     tiposBoleto.forEach((tipo) => {
         const disponibles = Number(tipo?.disponibles ?? 0);
         const agotado = disponibles <= 0;
+        const compraHabilitada = eventoPublicado && !agotado;
 
         const tarjeta = document.createElement("article");
         tarjeta.classList.add("ticket-type-card");
@@ -228,10 +269,12 @@ function mostrarTiposBoleto(tiposBoleto) {
 
         const btnComprar = document.createElement("button");
         btnComprar.type = "button";
-        btnComprar.className = `btn ${agotado ? "" : "btn-primary"} btn-full btn-comprar`;
-        btnComprar.textContent = agotado ? "Agotado" : "Comprar";
-        btnComprar.disabled = agotado;
-        if (!agotado) {
+        btnComprar.className = `btn ${compraHabilitada ? "btn-primary" : ""} btn-full btn-comprar`;
+        btnComprar.textContent = !eventoPublicado
+            ? "No disponible"
+            : (agotado ? "Agotado" : "Comprar");
+        btnComprar.disabled = !compraHabilitada;
+        if (compraHabilitada) {
             btnComprar.addEventListener("click", () => intentarComprar(tipo));
         }
 

@@ -1,5 +1,6 @@
 import { apiFetch } from "./api.js";
 import { AUTH_CHANGED_EVENT } from "./auth.js";
+import { cargarEventos } from "./event.js";
 import {
     escaparHtml,
     obtenerTituloError,
@@ -540,6 +541,7 @@ async function manejarCrearEvento(event) {
         });
 
         await cargarEventosAdmin();
+        await cargarEventos();
 
         ocultarFormularioCrearEvento();
 
@@ -1152,6 +1154,7 @@ async function cancelarEventoAdmin() {
         );
 
         await cargarEventosAdmin();
+        await cargarEventos();
 
         await cargarDetalleEventoAdmin(eventoAdminActualId);
 
@@ -1192,6 +1195,7 @@ async function publicarEventoAdmin() {
         );
 
         await cargarEventosAdmin();
+        await cargarEventos();
 
         await cargarDetalleEventoAdmin(eventoAdminActualId);
 
@@ -1235,6 +1239,7 @@ async function eliminarBorradorAdmin() {
         cerrarDetalleEventoAdmin();
 
         await cargarEventosAdmin();
+        await cargarEventos();
 
     } catch (error) {
 
