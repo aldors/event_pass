@@ -92,9 +92,10 @@ function crearTarjetaEvento(evento) {
     const contenido = document.createElement("div");
     contenido.className = "event-card-content";
 
+    const estadoValor = evento?.estado ?? "PUBLICADO";
     const estado = document.createElement("span");
-    estado.className = "event-status";
-    estado.textContent = evento?.estado ?? "PUBLICADO";
+    estado.className = `event-status status-${String(estadoValor).toLowerCase()}`;
+    estado.textContent = estadoValor;
 
     const titulo = document.createElement("h3");
     titulo.textContent = evento?.nombre ?? "Evento sin nombre";

@@ -815,7 +815,7 @@ function renderizarDetalleEventoAdmin(evento) {
                 <span class="eyebrow">DETALLE DEL EVENTO</span>
                 <h3>${escaparHtml(evento.nombre)}</h3>
 
-                <span class="admin-event-status">
+                <span class="admin-event-status status-${escaparHtml(String(evento.estado || "").toLowerCase())}">
                     ${escaparHtml(evento.estado)}
                 </span>
             </div>
@@ -1512,7 +1512,7 @@ function crearTarjetaEvento(evento) {
 
     return `
         <article class="admin-event-card">
-            <span class="admin-event-status">
+            <span class="admin-event-status status-${escaparHtml(String(evento.estado || "").toLowerCase())}">
                 ${escaparHtml(evento.estado)}
             </span>
 

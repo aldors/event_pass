@@ -119,6 +119,23 @@
     letter-spacing: 0.04em;
 }
 
+.admin-event-status.status-publicado {
+    background: #e8f0ec;
+    color: #35634c;
+}
+
+.admin-event-status.status-borrador,
+.admin-event-status.status-iniciado {
+    background: #fff4d6;
+    color: #8a6a1f;
+}
+
+.admin-event-status.status-finalizado,
+.admin-event-status.status-cancelado {
+    background: #fdecea;
+    color: #9a3d2f;
+}
+
 .admin-event-actions {
     display: flex;
     flex-wrap: wrap;

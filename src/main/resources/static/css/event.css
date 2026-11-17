@@ -115,6 +115,23 @@
     letter-spacing: 0.08em;
 }
 
+.event-status.status-publicado {
+    background: #e8f0ec;
+    color: #35634c;
+}
+
+.event-status.status-borrador,
+.event-status.status-iniciado {
+    background: #fff4d6;
+    color: #8a6a1f;
+}
+
+.event-status.status-finalizado,
+.event-status.status-cancelado {
+    background: #fdecea;
+    color: #9a3d2f;
+}
+
 
 .event-card h3 {
     margin-bottom: 10px;
