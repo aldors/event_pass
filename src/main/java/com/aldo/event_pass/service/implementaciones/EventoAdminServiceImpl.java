@@ -33,6 +33,7 @@ import com.aldo.event_pass.repository.DetalleCompraRepository;
 import com.aldo.event_pass.repository.EventoRepository;
 import com.aldo.event_pass.repository.TipoBoletoRepository;
 import com.aldo.event_pass.service.interfaces.EventoAdminService;
+import com.aldo.event_pass.support.EventoEstadoResolver;
 
 import lombok.RequiredArgsConstructor;
 
@@ -112,7 +113,7 @@ public class EventoAdminServiceImpl implements EventoAdminService {
         Evento evento = eventoRepository.findById(eventoId)
             .orElseThrow(() -> new EventoNoEncontradoException());
 
-        if (evento.getEstado() != EstadoEvento.PUBLICADO) {
+        if (EventoEstadoResolver.estadoEfectivo(evento) != EstadoEvento.PUBLICADO) {
             throw new CancelarEventoException();
         }
 
@@ -149,13 +150,7 @@ public class EventoAdminServiceImpl implements EventoAdminService {
         
         return eventoRepository.findAllByOrderByFechaInicioAsc()
             .stream()
-            .map(evento -> new EventoListadoResponse(
-                    evento.getId(),
-                    evento.getNombre(),
-                    evento.getUbicacion(),
-                    evento.getFechaInicio(),
-                    evento.getEstado()
-            ))
+            .map(EventoMapper::toListadoResponse)
             .toList();
     }
 

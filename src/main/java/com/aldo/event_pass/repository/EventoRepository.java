@@ -12,7 +12,10 @@ import com.aldo.event_pass.enums.EstadoEvento;
 @Repository
 public interface EventoRepository extends JpaRepository<Evento, Long> {
     
-    List<Evento> findByEstadoOrderByFechaInicioAsc(EstadoEvento estado);
+    List<Evento> findByEstadoAndFechaFinAfterOrderByFechaInicioAsc(EstadoEvento estado, LocalDateTime fecha);
+    List<Evento> findByEstadoInAndFechaFinAfterOrderByFechaInicioAsc(List<EstadoEvento> estados, LocalDateTime fecha);
     List<Evento> findByEstadoAndFechaFinBefore(EstadoEvento estado, LocalDateTime fecha);
+    List<Evento> findByEstadoInAndFechaFinBefore(List<EstadoEvento> estados, LocalDateTime fecha);
+    List<Evento> findByEstadoAndFechaInicioLessThanEqualAndFechaFinAfter(EstadoEvento estado, LocalDateTime inicio, LocalDateTime fin);
     List<Evento> findAllByOrderByFechaInicioAsc();
 }

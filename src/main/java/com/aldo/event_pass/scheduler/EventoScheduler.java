@@ -27,11 +27,25 @@ public class EventoScheduler {
 
     @Scheduled(fixedDelayString = "${app.schedulers.evento-finalizacion-delay-ms:1800000}")
     @Transactional
-    public void finalizarEventosVencidos() {
+    public void actualizarEstadosEventos() {
+        
+        LocalDateTime ahora = LocalDateTime.now();
 
-        List<Evento> vencidos = eventoRepository.findByEstadoAndFechaFinBefore(EstadoEvento.PUBLICADO, LocalDateTime.now());
+        List<Evento> porIniciar = eventoRepository
+            .findByEstadoAndFechaInicioLessThanEqualAndFechaFinAfter(EstadoEvento.PUBLICADO, ahora, ahora);
 
-        for(Evento evento : vencidos) {
+        for (Evento evento : porIniciar) {
+            evento.setEstado(EstadoEvento.INICIADO);
+            eventoRepository.save(evento);
+            log.info("Evento {} marcado como INICIADO", evento.getId());
+        }
+
+        List<Evento> vencidos = eventoRepository.findByEstadoInAndFechaFinBefore(
+            List.of(EstadoEvento.PUBLICADO, EstadoEvento.INICIADO),
+            ahora
+        );
+
+        for (Evento evento : vencidos) {
             evento.setEstado(EstadoEvento.FINALIZADO);
             eventoRepository.save(evento);
 

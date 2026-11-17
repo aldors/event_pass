@@ -46,6 +46,7 @@ import com.aldo.event_pass.exception.SesionDeCheckoutNoDevueltaException;
 import com.aldo.event_pass.exception.ReservarBoletosEnEventosPublicadosException;
 import com.aldo.event_pass.exception.StripeNoDisponibleException;
 import com.aldo.event_pass.exception.TipoBoletoInexistenteException;
+import com.aldo.event_pass.support.EventoEstadoResolver;
 import com.aldo.event_pass.repository.BoletoRepository;
 import com.aldo.event_pass.repository.CompraRepository;
 import com.aldo.event_pass.repository.DetalleCompraRepository;
@@ -93,12 +94,14 @@ public class CompraServiceImpl implements CompraService {
         Evento evento = eventoRepository.findById(reservarBoletosRequest.getEventoId())
             .orElseThrow(() -> new EventoNoEncontradoException());
 
-        if(evento.getEstado() != EstadoEvento.PUBLICADO){
-            throw new ReservarBoletosEnEventosPublicadosException();
-        }
-
-        if(!evento.getFechaInicio().isAfter(LocalDateTime.now())){
+        EstadoEvento estadoEfectivo = EventoEstadoResolver.estadoEfectivo(evento);
+        
+        if (estadoEfectivo == EstadoEvento.INICIADO) {
             throw new EventoIniciadoException();
+        }
+        
+        if (estadoEfectivo != EstadoEvento.PUBLICADO) {
+            throw new ReservarBoletosEnEventosPublicadosException();
         }
 
         // Boletos que ya ha comprado este usuario en este evento
@@ -496,11 +499,9 @@ public class CompraServiceImpl implements CompraService {
             return false;
         }
 
-        if (evento.getEstado() == EstadoEvento.CANCELADO) {
-            return false;
-        }
-
-        if (evento.getEstado() == EstadoEvento.FINALIZADO || evento.getFechaFin().isBefore(LocalDateTime.now())) {
+        EstadoEvento estadoEfectivo = EventoEstadoResolver.estadoEfectivo(evento);
+        
+        if (estadoEfectivo == EstadoEvento.CANCELADO || estadoEfectivo == EstadoEvento.FINALIZADO) {
             return false;
         }
 

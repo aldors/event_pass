@@ -1,5 +1,6 @@
 package com.aldo.event_pass.service.implementaciones;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import com.aldo.event_pass.mapper.TipoBoletoMapper;
 import com.aldo.event_pass.repository.DetalleCompraRepository;
 import com.aldo.event_pass.repository.EventoRepository;
 import com.aldo.event_pass.service.interfaces.EventoPublicService;
+import com.aldo.event_pass.support.EventoEstadoResolver;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,7 +32,13 @@ public class EventoPublicServiceImpl implements EventoPublicService {
     @Override
     @Transactional(readOnly = true)
     public List<EventoListadoResponse> obtenerEventos() {
-        return eventoRepository.findByEstadoOrderByFechaInicioAsc(EstadoEvento.PUBLICADO)
+
+        LocalDateTime ahora = LocalDateTime.now();
+
+        return eventoRepository.findByEstadoInAndFechaFinAfterOrderByFechaInicioAsc(
+                List.of(EstadoEvento.PUBLICADO, EstadoEvento.INICIADO),
+                ahora
+            )
             .stream()
             .map(EventoMapper::toListadoResponse)
             .toList();
@@ -43,7 +51,9 @@ public class EventoPublicServiceImpl implements EventoPublicService {
         Evento evento = eventoRepository.findById(eventoId)
             .orElseThrow(() -> new EventoNoEncontradoException());
 
-        if(evento.getEstado() != EstadoEvento.PUBLICADO) {
+        EstadoEvento estadoEfectivo = EventoEstadoResolver.estadoEfectivo(evento);
+        
+        if (estadoEfectivo != EstadoEvento.PUBLICADO && estadoEfectivo != EstadoEvento.INICIADO) {
             throw new EventoNoDisponibleException();
         }
 

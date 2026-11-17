@@ -10,6 +10,7 @@ import com.aldo.event_pass.dto.evento.EventoRequest;
 import com.aldo.event_pass.dto.evento.EventoResponse;
 import com.aldo.event_pass.dto.tipo_boleto.TipoBoletoDisponibleResponse;
 import com.aldo.event_pass.entity.Evento;
+import com.aldo.event_pass.support.EventoEstadoResolver;
 
 @Component
 public class EventoMapper {
@@ -34,7 +35,7 @@ public class EventoMapper {
             evento.getFechaInicio(),
             evento.getFechaFin(),
             evento.getMaxBoletosPorUsuario(),
-            evento.getEstado()
+            EventoEstadoResolver.estadoEfectivo(evento)
         );
     }
 
@@ -44,7 +45,7 @@ public class EventoMapper {
             evento.getNombre(),
             evento.getUbicacion(),
             evento.getFechaInicio(),
-            evento.getEstado()
+            EventoEstadoResolver.estadoEfectivo(evento)
         );
     }
 
@@ -57,7 +58,7 @@ public class EventoMapper {
             evento.getFechaInicio(),
             evento.getFechaFin(),
             evento.getMaxBoletosPorUsuario(),
-            evento.getEstado(),
+            EventoEstadoResolver.estadoEfectivo(evento),
             tiposBoleto
         );
     }
