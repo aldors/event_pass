@@ -222,7 +222,7 @@ function mostrarTiposBoleto(tiposBoleto, estadoEvento) {
     if (!contenedor) return;
     contenedor.innerHTML = "";
 
-    const eventoPublicado = estadoEvento === "PUBLICADO";
+    const eventoPublicado = estadoEvento === "PUBLICADO" || estadoEvento === "INICIADO";
 
     if (!Array.isArray(tiposBoleto) || tiposBoleto.length === 0) {
         contenedor.innerHTML = `
