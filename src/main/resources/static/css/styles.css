@@ -168,6 +168,41 @@ a {
 }
 
 
+.btn-nav {
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: rgba(16, 42, 45, 0.06);
+    border-color: rgba(16, 42, 45, 0.12);
+    color: var(--dark);
+    font-size: 0.86rem;
+    font-weight: 600;
+}
+
+.btn-nav:hover {
+    background: rgba(16, 42, 45, 0.12);
+    border-color: rgba(16, 42, 45, 0.2);
+    color: var(--dark);
+}
+
+.btn-logout {
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 8px;
+    background: transparent;
+    border-color: rgba(181, 74, 58, 0.35);
+    color: #b54a3a;
+    font-size: 0.86rem;
+    font-weight: 600;
+}
+
+.btn-logout:hover {
+    background: rgba(181, 74, 58, 0.08);
+    border-color: #b54a3a;
+    color: #943c2f;
+}
+
+
 .btn-full {
     width: 100%;
 }
