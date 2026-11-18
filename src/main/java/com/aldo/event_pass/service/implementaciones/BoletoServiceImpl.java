@@ -1,8 +1,5 @@
 package com.aldo.event_pass.service.implementaciones;
 
-
-import java.time.LocalDateTime;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,11 +19,13 @@ import com.aldo.event_pass.exception.BoletoNoPagadoException;
 import com.aldo.event_pass.exception.BoletoUtilizadoException;
 import com.aldo.event_pass.exception.EventoCanceladoException;
 import com.aldo.event_pass.exception.EventoFinalizadoException;
+import com.aldo.event_pass.exception.EventoNoDisponibleException;
 import com.aldo.event_pass.exception.PermisoDenegadoParaGenerarBoletoException;
 import com.aldo.event_pass.repository.BoletoRepository;
 import com.aldo.event_pass.security.CurrentUserService;
 import com.aldo.event_pass.service.interfaces.BoletoService;
 import com.aldo.event_pass.service.interfaces.PdfService;
+import com.aldo.event_pass.support.EventoEstadoResolver;
 
 import lombok.RequiredArgsConstructor;
 
@@ -49,10 +48,11 @@ public class BoletoServiceImpl implements BoletoService {
 
         TipoBoleto tipoBoleto = boleto.getDetalleCompra().getTipoBoleto();
 
+        EstadoEvento estadoEfectivo = EventoEstadoResolver.estadoEfectivo(evento);
+
         boolean valido = boleto.getEstado() == EstadoBoleto.ACTIVO
                 && boleto.getDetalleCompra().getCompra().getEstado() == EstadoCompra.PAGADA
-                && evento.getEstado() == EstadoEvento.PUBLICADO
-                && evento.getFechaFin().isAfter(LocalDateTime.now());
+                && (estadoEfectivo == EstadoEvento.PUBLICADO || estadoEfectivo == EstadoEvento.INICIADO);
 
         return new BoletoResponse(
                 evento.getNombre(),
@@ -127,12 +127,19 @@ public class BoletoServiceImpl implements BoletoService {
     }
 
     private void validarEventoVigente(Evento evento) {
-        if (evento.getEstado() == EstadoEvento.CANCELADO) {
+        
+        EstadoEvento estadoEfectivo = EventoEstadoResolver.estadoEfectivo(evento);
+
+        if (estadoEfectivo == EstadoEvento.CANCELADO) {
             throw new EventoCanceladoException();
         }
 
-        if (evento.getEstado() == EstadoEvento.FINALIZADO || evento.getFechaFin().isBefore(LocalDateTime.now())) {
+        if (estadoEfectivo == EstadoEvento.FINALIZADO) {
             throw new EventoFinalizadoException();
+        }
+
+        if (estadoEfectivo == EstadoEvento.BORRADOR) {
+            throw new EventoNoDisponibleException();
         }
     }
     
