@@ -10,6 +10,7 @@ import {
 
 const btnAdmin = document.getElementById("btnAdmin");
 const panelAdmin = document.getElementById("panelAdmin");
+const cerrarPanelAdmin = document.getElementById("cerrarPanelAdmin");
 
 const listaAdminEventos = document.getElementById("listaAdminEventos");
 const detalleAdminEvento = document.getElementById("detalleAdminEvento");
@@ -69,6 +70,7 @@ export function initAdmin() {
     adminInitDone = true;
 
     btnAdmin?.addEventListener("click", mostrarPanelAdmin);
+    cerrarPanelAdmin?.addEventListener("click", ocultarAdmin);
 
     listaAdminEventos?.addEventListener("click", manejarClickEvento);
 
@@ -385,11 +387,14 @@ function renderizarDetalleEventoAdmin(evento) {
         <div class="admin-detail-header">
             <div>
                 <span class="eyebrow">DETALLE DEL EVENTO</span>
-                <h3>${escaparHtml(evento.nombre)}</h3>
 
-                <span class="admin-event-status status-${escaparHtml(String(evento.estado || "").toLowerCase())}">
-                    ${escaparHtml(evento.estado)}
-                </span>
+                <div class="admin-event-title">
+                    <h3>${escaparHtml(evento.nombre)}</h3>
+
+                    <span class="admin-event-status status-${escaparHtml(String(evento.estado || "").toLowerCase())}">
+                        ${escaparHtml(evento.estado)}
+                    </span>
+                </div>
             </div>
 
             <button

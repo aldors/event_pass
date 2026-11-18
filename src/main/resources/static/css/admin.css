@@ -81,6 +81,13 @@
     max-width: 620px;
 }
 
+.admin-panel-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
 /* =========================
    EVENTOS ADMIN
 ========================= */
@@ -252,6 +259,23 @@
 .admin-detail-header h3 {
     margin: 6px 0 0;
     font-size: 1.6rem;
+}
+
+.admin-event-title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.admin-event-title h3 {
+    margin: 0;
+    line-height: 1.2;
+}
+
+.admin-event-title .admin-event-status {
+    margin-bottom: 0;
 }
 
 .admin-detail-info {
