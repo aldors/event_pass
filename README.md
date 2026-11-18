@@ -2,7 +2,7 @@
 
 > API REST desarrollada con Spring Boot para la creación, publicación, reserva, venta y validación de boletos para eventos.
 
-Event Pass cubre el ciclo completo del boleto: un `ADMIN` crea el evento en `BORRADOR`, define tipos de boleto y lo `PUBLICA`. Un `USER` reserva (con expiración de 15 minutos), paga (simulado), descarga su boleto en PDF con código QR y el `ADMIN` lo valida en puerta con el endpoint de `usar` o la página `verificar.html`.
+Event Pass cubre el ciclo completo del boleto: un `ADMIN` crea el evento en `BORRADOR`, define tipos de boleto y lo `PUBLICA`. Un `USER` reserva (con expiración de 15 minutos), paga (simulado) y descarga su boleto en PDF con código QR. Un `ADMIN` o `STAFF` valida el acceso en puerta con el endpoint de `usar`, el panel “Validar boletos” o la página `verificar.html`.
 
 **Repo:** `git@github.com:aldors/event_pass.git`
 
@@ -29,7 +29,7 @@ Event Pass cubre el ciclo completo del boleto: un `ADMIN` crea el evento en `BOR
 - Registro de usuarios (`USER` por defecto) con BCrypt.
 - Login con JWT: **Access Token (30 min)** + **Refresh Token (60 min)**.
 - Refresh, logout (revocación del refresh token) y perfil `/auth/me`.
-- Roles: **`USER`** y **`ADMIN`**.
+- Roles: **`USER`**, **`STAFF`** y **`ADMIN`**.
 
 ### 📅 Eventos (ADMIN + público)
 - Crear evento en estado `BORRADOR`.
@@ -39,18 +39,19 @@ Event Pass cubre el ciclo completo del boleto: un `ADMIN` crea el evento en `BOR
 - Eliminar eventos en borrador.
 - Validaciones: fecha inicio futura, fecha fin posterior a inicio, solo se puede publicar/reservar en estado correcto.
 
-### 🛒 Reservas, pagos y compras (USER)
+### 🛒 Reservas, pagos y compras (USER + ADMIN)
 - Reservar boletos solo en eventos `PUBLICADOS` → compra en `RESERVADA`.
 - **La reserva expira a los 15 minutos** si no se paga (ver Schedulers).
 - Pago con **Stripe (test)** → compra `PAGADA` + registro de `Pago` (confirmado vía webhook, con reconciliación de respaldo).
 - Consultar `mis-compras` y detalle de compra.
 
-### 🎫 Boletos digitales
+### 🎫 Boletos digitales y validación en puerta
 - Generación de boleto digital en **PDF con código QR** (OpenPDF + ZXing).
 - Descarga del PDF: `GET /boletos/{id}/pdf` (dueño o ADMIN).
 - Verificación pública: `GET /boletos/verificar/{codigoQr}`.
-- Uso en puerta (solo `ADMIN`): `POST /boletos/{codigoQr}/usar` → `ACTIVO` → `UTILIZADO`.
-- Página estática `verificar.html` + escáner QR para validar/usar boletos desde el navegador.
+- Uso en puerta (`ADMIN` o `STAFF`): `POST /boletos/{codigoQr}/usar` → `ACTIVO` → `UTILIZADO`.
+- Panel “Validar boletos” para `ADMIN` y `STAFF`, con escáner QR y confirmación antes de marcar el uso.
+- Página estática `verificar.html` + escáner QR para validar boletos desde el navegador.
 
 ### 🧩 Transversales
 - DTOs de entrada/salida + Mappers (Evento, TipoBoleto, Login, Registro).
@@ -118,7 +119,7 @@ enums/         → Role, EstadoEvento, EstadoCompra, EstadoPago, EstadoBoleto
 ## 🧾 Modelo de datos y reglas de negocio
 
 ```plaintext
-Usuario (USER, ADMIN)
+Usuario (USER, ADMIN, STAFF)
   │ 1──N Compra (RESERVADA → PAGADA / CANCELADA / EXPIRADA)
   │        │ 1──N DetalleCompra ──N──1 TipoBoleto ──N──1 Evento (BORRADOR → PUBLICADO → FINALIZADO / CANCELADO)
   │        │ 1──1 Pago (PENDIENTE → APROBADO / RECHAZADO, simulado)
@@ -134,12 +135,13 @@ Reglas clave:
 | Solo publicados | Solo se puede reservar en eventos `PUBLICADO` |
 | Stock y tope | Se valida disponibilidad y máximo de boletos por usuario y tipo |
 | Cierre de evento | Al pasar `fechaFin`, el evento pasa a `FINALIZADO`; boletos `ACTIVO` pagados → `INVALIDADO`, reservas colgadas → `EXPIRADA` |
-| QR de un solo uso | `ACTIVO` → `UTILIZADO` solo por `ADMIN`; verificar es público |
+| QR de un solo uso | `ACTIVO` → `UTILIZADO` por `ADMIN` o `STAFF`; verificar es público |
 | PDF propio | Solo el dueño de la compra puede descargar el PDF |
 
 Estados:
 
-- `EstadoEvento`: `BORRADOR`, `PUBLICADO`, `FINALIZADO`, `CANCELADO`
+- `Role`: `USER`, `ADMIN`, `STAFF`
+- `EstadoEvento`: `BORRADOR`, `PUBLICADO`, `INICIADO`, `FINALIZADO`, `CANCELADO`
 - `EstadoCompra`: `RESERVADA`, `PAGADA`, `CANCELADA`, `EXPIRADA`
 - `EstadoPago`: `PENDIENTE`, `APROBADO`, `RECHAZADO`, `EXPIRADO`
 - `EstadoBoleto`: `ACTIVO`, `UTILIZADO`, `INVALIDADO`
@@ -157,8 +159,8 @@ Base URL local: `http://localhost:8080`
 | POST | `/auth/registro` | Público | Registrar usuario |
 | POST | `/auth/login` | Público | Login, devuelve access + refresh token |
 | POST | `/auth/refresh-token` | Público (con refresh válido) | Renovar access token |
-| POST | `/auth/logout` | `USER`, `ADMIN` | Revocar refresh token |
-| GET | `/auth/me` | `USER`, `ADMIN` | Perfil del usuario autenticado |
+| POST | `/auth/logout` | `USER`, `ADMIN`, `STAFF` | Revocar refresh token |
+| GET | `/auth/me` | `USER`, `ADMIN`, `STAFF` | Perfil del usuario autenticado |
 
 ### Eventos públicos — `/eventos`
 
@@ -194,7 +196,7 @@ Base URL local: `http://localhost:8080`
 | Método | Endpoint | Acceso | Descripción |
 |---|---|---|---|
 | GET | `/boletos/verificar/{codigoQr}` | Público | Ver datos del boleto sin marcarlo |
-| POST | `/boletos/{codigoQr}/usar` | `ADMIN` | Marcar boleto como `UTILIZADO` |
+| POST | `/boletos/{codigoQr}/usar` | `ADMIN`, `STAFF` | Marcar boleto como `UTILIZADO` |
 | GET | `/boletos/{id}/pdf` | `USER`, `ADMIN` | Descargar boleto en PDF con QR |
 
 Ejemplo de login:
@@ -285,13 +287,22 @@ mvnw.cmd spring-boot:run
 
 La API queda en `http://localhost:8080`.
 
-### 4. Crear un ADMIN
+### 4. Crear un ADMIN o STAFF
 
-El registro crea usuarios `USER`. Para operar eventos, promueve uno a `ADMIN` directamente en MySQL:
+El registro crea usuarios `USER`. Para operar eventos, promueve uno a `ADMIN`; para validar boletos en puerta, promueve uno a `STAFF`:
 
 ```sql
-UPDATE usuario SET rol = 'ADMIN' WHERE email = 'tu@email.com';
+UPDATE usuarios SET rol = 'ADMIN' WHERE email = 'tu@email.com';
+UPDATE usuarios SET rol = 'STAFF' WHERE email = 'staff@email.com';
 ```
+
+Matriz rápida de acceso:
+
+| Rol | Administrar eventos | Reservar/comprar y ver compras | Validar/usar boletos |
+|---|---|---|---|
+| `USER` | No | Sí | No |
+| `ADMIN` | Sí | Sí | Sí |
+| `STAFF` | No | No | Sí |
 
 ---
 
@@ -311,7 +322,7 @@ Flujo típico end-to-end:
 2. Como ADMIN: `POST /admin/eventos/crear` → `agregar-tipo-boleto` → `publicar`.
 3. Como USER: `GET /eventos/obtener` → `POST /compras/reservar-boletos` → `POST /compras/{id}/pagar` (antes de 15 min).
 4. `GET /boletos/{id}/pdf` para descargar el boleto.
-5. En puerta (ADMIN): `GET /boletos/verificar/{codigoQr}` y `POST /boletos/{codigoQr}/usar`, o usa `verificar.html` con la cámara.
+5. En puerta (`ADMIN` o `STAFF`): `GET /boletos/verificar/{codigoQr}` y `POST /boletos/{codigoQr}/usar`, o usa el panel “Validar boletos” / `verificar.html` con la cámara.
 
 ---
 
@@ -351,7 +362,7 @@ El QR del PDF apunta a `app.base-url`. Para escanearlo desde un celular en la mi
 
 ## 🗺️ Estado y siguientes pasos
 
-- [x] Auth JWT con refresh y roles
+- [x] Auth JWT con refresh y roles (`USER`, `ADMIN`, `STAFF`)
 - [x] CRUD y publicación de eventos
 - [x] Reserva con expiración + schedulers
 - [x] Boleto PDF + QR + verificación/uso
