@@ -42,6 +42,10 @@
             Administración
         </button>
 
+        <button id="btnValidar" class="btn btn-nav hidden" type="button">
+            Validar boletos
+        </button>
+
         <button id="btnAuth" class="btn btn-nav" type="button">
             Iniciar sesión
         </button>
@@ -234,31 +238,9 @@
                 </h2>
 
                 <p>
-                    Gestiona tus eventos y valida el acceso de los asistentes.
+                    Gestiona tus eventos, sus tipos de boleto y su publicación.
                 </p>
             </div>
-        </div>
-
-        <div class="admin-tabs" role="tablist" aria-label="Secciones del panel de administración">
-            <button
-                id="tabAdminEventos"
-                class="admin-tab active"
-                type="button"
-                role="tab"
-                aria-selected="true"
-            >
-                Eventos
-            </button>
-
-            <button
-                id="tabAdminScanner"
-                class="admin-tab"
-                type="button"
-                role="tab"
-                aria-selected="false"
-            >
-                Escáner QR
-            </button>
         </div>
 
         <div id="adminEventos" class="admin-panel">
@@ -427,25 +409,31 @@
             </div>
         </div>
 
-        <div id="adminScanner" class="admin-panel hidden">
+    </div>
+</section>
 
-            <div class="admin-panel-header">
-                <div>
-                    <span class="eyebrow">
-                        CONTROL DE ACCESO
-                    </span>
 
-                    <h3>
-                        Escáner de boletos
-                    </h3>
+<section id="panelValidacion" class="admin-section hidden" aria-labelledby="tituloValidacion">
+    <div class="admin-container">
 
-                    <p>
-                        Escanea el código QR del boleto para verificarlo y
-                        permitir el acceso.
-                    </p>
-                </div>
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">
+                    CONTROL DE ACCESO
+                </span>
+
+                <h2 id="tituloValidacion">
+                    Validación de boletos
+                </h2>
+
+                <p>
+                    Escanea el código QR del boleto para verificarlo y
+                    permitir el acceso.
+                </p>
             </div>
+        </div>
 
+        <div class="admin-panel">
             <div id="scannerContainer" class="scanner-container">
 
                 <div class="scanner-placeholder">
@@ -469,9 +457,7 @@
                 class="scanner-result hidden"
                 aria-live="polite"
             >
-                <!-- Resultado de verificación generado mediante JavaScript -->
             </div>
-
         </div>
 
     </div>

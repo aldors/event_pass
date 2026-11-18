@@ -1,5 +1,5 @@
 import { apiFetch, getAccessToken, ApiError } from "./api.js";
-import { AUTH_REQUIRED_EVENT, AUTH_CHANGED_EVENT } from "./auth.js";
+import { AUTH_REQUIRED_EVENT, AUTH_CHANGED_EVENT, obtenerPermisos } from "./auth.js";
 import { abrirCompra } from "./compra.js";
 import {
     formatearFecha,
@@ -27,7 +27,8 @@ export function initEventos() {
  * USER y anónimo siguen usando el catálogo público.
  */
 function manejarCambioAuthEventos(event) {
-    const admin = event.detail?.autenticado === true && event.detail?.usuario?.rol === "ADMIN";
+    const permisos = event.detail?.permisos ?? obtenerPermisos(event.detail?.usuario);
+    const admin = event.detail?.autenticado === true && permisos.puedeAdministrar === true;
 
     if (admin === esAdmin) return;
 

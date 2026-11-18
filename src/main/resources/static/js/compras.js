@@ -6,7 +6,8 @@ import {
 } from "./api.js";
 
 import {
-    AUTH_CHANGED_EVENT
+    AUTH_CHANGED_EVENT,
+    obtenerPermisos
 } from "./auth.js";
 
 import {
@@ -79,8 +80,9 @@ export function initCompras() {
 
 function manejarCambioAutenticacion(event) {
     const autenticado = event.detail?.autenticado === true;
+    const permisos = event.detail?.permisos ?? obtenerPermisos(event.detail?.usuario);
 
-    btnMisCompras?.classList.toggle("hidden", !autenticado);
+    btnMisCompras?.classList.toggle("hidden", !autenticado || !permisos.puedeVerCompras);
 
     if (!autenticado) {
         cerrarModalCompras();

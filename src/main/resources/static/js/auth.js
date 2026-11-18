@@ -12,12 +12,24 @@ import { setButtonLoading, obtenerListaErrores, agregarDetalleErrores } from "./
 export const AUTH_REQUIRED_EVENT = "auth:required";
 export const AUTH_CHANGED_EVENT = "auth:changed";
 
+export function obtenerPermisos(usuario) {
+    const rol = usuario?.rol;
+
+    return {
+        puedeAdministrar: rol === "ADMIN",
+        puedeEscanear: rol === "ADMIN" || rol === "STAFF",
+        puedeVerCompras: rol === "USER" || rol === "ADMIN"
+    };
+}
+
 const modalAuth = document.getElementById("modalAuth");
 const btnAuth = document.getElementById("btnAuth");
 const btnLogout = document.getElementById("btnLogout");
 const saludoUsuario = document.getElementById("saludoUsuario");
 const cerrarModal = document.getElementById("cerrarModal");
 const btnMisCompras = document.getElementById("btnMisCompras");
+const btnAdmin = document.getElementById("btnAdmin");
+const btnValidar = document.getElementById("btnValidar");
 
 const tabLogin = document.getElementById("tabLogin");
 const tabRegistro = document.getElementById("tabRegistro");
@@ -252,20 +264,26 @@ function mostrarUsuarioAutenticado(usuario) {
 
     usuarioActual = usuario ?? null;
 
+    const permisos = obtenerPermisos(usuarioActual);
+
     btnAuth?.classList.add("hidden");
 
     if (saludoUsuario) {
         saludoUsuario.textContent = usuario?.nombre ? `Hola, ${usuario.nombre}` : "Hola";
         saludoUsuario.classList.remove("hidden");
     }
-    btnMisCompras?.classList.remove("hidden");
+
+    btnMisCompras?.classList.toggle("hidden", !permisos.puedeVerCompras);
+    btnAdmin?.classList.toggle("hidden", !permisos.puedeAdministrar);
+    btnValidar?.classList.toggle("hidden", !permisos.puedeEscanear);
     btnLogout?.classList.remove("hidden");
 
     window.dispatchEvent(
         new CustomEvent(AUTH_CHANGED_EVENT, {
             detail: {
                 autenticado: true,
-                usuario: usuarioActual
+                usuario: usuarioActual,
+                permisos
             }
         })
     );
@@ -275,8 +293,12 @@ function mostrarUsuarioNoAutenticado() {
 
     usuarioActual = null;
 
+    const permisos = obtenerPermisos(null);
+
     saludoUsuario?.classList.add("hidden");
     btnMisCompras?.classList.add("hidden");
+    btnAdmin?.classList.add("hidden");
+    btnValidar?.classList.add("hidden");
     btnLogout?.classList.add("hidden");
     btnAuth?.classList.remove("hidden");
 
@@ -284,7 +306,8 @@ function mostrarUsuarioNoAutenticado() {
         new CustomEvent(AUTH_CHANGED_EVENT, {
             detail: {
                 autenticado: false,
-                usuario: null
+                usuario: null,
+                permisos
             }
         })
     );
