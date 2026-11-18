@@ -26,7 +26,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
-@Tag(name = "Boletos", description = "Verificación pública, uso en acceso (ADMIN) y descarga de PDF")
+@Tag(name = "Boletos", description = "Verificación pública, uso en acceso (ADMIN o STAFF) y descarga de PDF")
 @RestController
 @RequestMapping("/boletos")
 @RequiredArgsConstructor
@@ -48,12 +48,12 @@ public class BoletoController {
         return ResponseEntity.ok(boletoService.verificarBoleto(codigoQr));
     }
 
-    @Operation(summary = "Marcar boleto como usado", description = "Valida el ingreso en puerta escaneando el QR. Requiere rol ADMIN.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Marcar boleto como usado", description = "Valida el ingreso en puerta escaneando el QR. Requiere rol ADMIN o STAFF.", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Boleto marcado como usado",
             content = @Content(schema = @Schema(implementation = UsarBoletoResponse.class))),
         @ApiResponse(responseCode = "401", description = "No autenticado"),
-        @ApiResponse(responseCode = "403", description = "Se requiere rol ADMIN"),
+        @ApiResponse(responseCode = "403", description = "Se requiere rol ADMIN o STAFF"),
         @ApiResponse(responseCode = "404", description = "Boleto no encontrado",
             content = @Content(schema = @Schema(implementation = ApiError.class),
                 examples = @ExampleObject(name = "Error 404", value = "{\"status\":404,\"message\":\"Recurso no encontrado\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"Recurso no encontrado\"]}"))),
@@ -61,7 +61,7 @@ public class BoletoController {
             content = @Content(schema = @Schema(implementation = ApiError.class),
                 examples = @ExampleObject(name = "Error 409", value = "{\"status\":409,\"message\":\"Conflicto\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"Conflicto con el estado actual\"]}")))
     })
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     @PostMapping("/{codigoQr}/usar")
     public ResponseEntity<UsarBoletoResponse> usarBoleto(
             @Parameter(description = "Código QR del boleto", example = "EVT-AB12CD34") @PathVariable String codigoQr) {

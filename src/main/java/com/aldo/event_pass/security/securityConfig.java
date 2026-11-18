@@ -41,10 +41,10 @@ public class SecurityConfig {
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/registro", "/auth/login", "/auth/refresh-token").permitAll()
-                        .requestMatchers("/auth/logout", "/auth/me").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/auth/logout", "/auth/me").hasAnyRole("USER", "ADMIN", "STAFF")
                         .requestMatchers("/admin/eventos/**").hasRole("ADMIN")
                         .requestMatchers("/boletos/verificar/**").permitAll()
-                        .requestMatchers("/boletos/*/usar").hasRole("ADMIN")
+                        .requestMatchers("/boletos/*/usar").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers("/boletos/*/pdf").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/compras/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/eventos/**").permitAll()
