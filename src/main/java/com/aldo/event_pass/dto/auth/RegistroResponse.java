@@ -15,6 +15,6 @@ public class RegistroResponse {
     private String apellido;
     @Schema(description = "Correo del usuario", example = "aldo@email.com")
     private String email;
-    @Schema(description = "Rol asignado", example = "USER")
+    @Schema(description = "Rol asignado (siempre USER en el registro)", example = "USER", allowableValues = {"USER"})
     private String rol;
 }

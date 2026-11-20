@@ -23,14 +23,14 @@ public class EventoDetalleResponse {
     private String descripcion;
     @Schema(description = "Ubicación del evento", example = "Auditorio Nacional, CDMX")
     private String ubicacion;
-    @Schema(description = "Fecha y hora de inicio", example = "2026-11-20T19:00:00")
+    @Schema(description = "Fecha y hora de inicio", example = "2026-12-20T19:00:00")
     private LocalDateTime fechaInicio;
-    @Schema(description = "Fecha y hora de fin", example = "2026-11-20T23:00:00")
+    @Schema(description = "Fecha y hora de fin", example = "2026-12-20T23:00:00")
     private LocalDateTime fechaFin;
     @Schema(description = "Límite de boletos por usuario", example = "4")
     private Integer maxBoletosPorUsuario;
-    @Schema(description = "Estado del evento", example = "PUBLICADO")
+    @Schema(description = "Estado efectivo del evento calculado con las fechas (puede ser INICIADO)", example = "INICIADO")
     private EstadoEvento estado;
-    @Schema(description = "Tipos de boleto disponibles")
+    @Schema(description = "Tipos de boleto del evento con disponibilidad calculada (disponibles puede ser 0)")
     private List<TipoBoletoDisponibleResponse> tiposBoleto;
 }

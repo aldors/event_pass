@@ -17,14 +17,10 @@ public class BoletoDetalleResponse {
     private String tipoBoletoNombre;
     @Schema(description = "Titular del boleto", example = "Aldo Ruiz")
     private String titularNombre;
-    @Schema(description = "Folio / código QR", example = "EVT-AB12CD34")
+    @Schema(description = "Folio del boleto (UUID distinto del código QR escaneado)", example = "550e8400-e29b-41d4-a716-446655440000")
     private String folio;
     @Schema(description = "Estado del boleto", example = "ACTIVO")
     private EstadoBoleto estado;
-    /*
-     * Indica si el PDF puede descargarse (compra pagada y evento vigente).
-     * El frontend solo lee este flag, no replica las reglas.
-     */
-    @Schema(description = "Indica si el PDF puede descargarse", example = "true")
+    @Schema(description = "PDF descargable si la compra está PAGADA y el estado efectivo del evento no es CANCELADO ni FINALIZADO (INICIADO permitido); el endpoint exige ser el dueño", example = "true")
     private boolean descargable;
 }

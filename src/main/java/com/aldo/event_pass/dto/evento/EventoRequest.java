@@ -24,12 +24,12 @@ public class EventoRequest {
     @NotBlank(message = "La descripción del evento es obligatoria")
     private String descripcion;
 
-    @Schema(description = "Fecha y hora de inicio", example = "2026-11-20T19:00:00")
+    @Schema(description = "Fecha y hora de inicio", example = "2026-12-20T19:00:00")
     @NotNull(message = "La fecha de inicio es obligatoria")
     @FutureOrPresent(message = "La fecha de inicio debe ser actual o futura")
     private LocalDateTime fechaInicio;
 
-    @Schema(description = "Fecha y hora de fin", example = "2026-11-20T23:00:00")
+    @Schema(description = "Fecha y hora de fin", example = "2026-12-20T23:00:00")
     @NotNull(message = "La fecha de fin es obligatoria")
     @Future(message = "La fecha de fin debe ser futura")
     private LocalDateTime fechaFin;

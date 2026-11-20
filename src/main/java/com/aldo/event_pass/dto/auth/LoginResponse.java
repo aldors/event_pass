@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-@Schema(description = "Tokens generados al iniciar sesión o renovarlos")
+@Schema(description = "Access token y refresh token al iniciar sesión; al renovar se reutiliza el refresh token existente")
 public class LoginResponse {
     
     @Schema(description = "JWT de acceso", example = "eyJhbGciOiJIUzI1NiJ9...")

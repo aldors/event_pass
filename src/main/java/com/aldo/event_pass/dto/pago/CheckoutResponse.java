@@ -11,7 +11,7 @@ public class CheckoutResponse {
     
     @Schema(description = "ID de la compra a pagar", example = "1")
     private Long compraId;
-    @Schema(description = "Estado del pago pendiente", example = "PENDIENTE")
+    @Schema(description = "Estado del pago Stripe al crear o reutilizar el checkout (siempre PENDIENTE)", example = "PENDIENTE", allowableValues = {"PENDIENTE"})
     private String estado;
     @Schema(description = "URL de la pasarela de Stripe para completar el pago", example = "https://checkout.stripe.com/c/pay/cs_test_abc123")
     private String checkoutUrl;

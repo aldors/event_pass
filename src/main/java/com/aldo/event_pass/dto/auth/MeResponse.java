@@ -13,6 +13,6 @@ public class MeResponse {
     private String nombre;
     @Schema(description = "Correo del usuario", example = "aldo@email.com")
     private String email;
-    @Schema(description = "Rol del usuario", example = "USER")
+    @Schema(description = "Rol del usuario", example = "USER", allowableValues = {"USER", "ADMIN", "STAFF"})
     private String rol;
 }

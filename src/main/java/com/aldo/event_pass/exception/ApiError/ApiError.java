@@ -14,7 +14,7 @@ public class ApiError {
     private int status;
     @Schema(description = "Título del error", example = "Error de validación")
     private String message;
-    @Schema(description = "Fecha y hora del error", example = "2026-10-08T10:00:00")
+    @Schema(description = "Fecha y hora del error", example = "2026-12-20T19:00:00")
     private LocalDateTime timestamp;
     @Schema(description = "Detalle de errores", example = "[\"Detalle del error\"]")
     private List<String> errors;

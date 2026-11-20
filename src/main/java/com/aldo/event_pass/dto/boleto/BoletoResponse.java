@@ -17,10 +17,10 @@ public class BoletoResponse {
     private String tipoBoleto;
     @Schema(description = "Titular del boleto", example = "Aldo Rojas")
     private String titular;
-    @Schema(description = "Folio / código QR", example = "EVT-AB12CD34")
+    @Schema(description = "Folio del boleto (UUID distinto del código QR escaneado)", example = "550e8400-e29b-41d4-a716-446655440000")
     private String folio;
     @Schema(description = "Estado del boleto", example = "ACTIVO")
     private EstadoBoleto estado;
-    @Schema(description = "Indica si el boleto es válido para ingreso", example = "true")
+    @Schema(description = "Válido para ingreso: boleto ACTIVO, compra PAGADA y evento efectivo PUBLICADO o INICIADO", example = "true")
     private boolean valido;
 }

@@ -49,9 +49,9 @@ public class EventoAdminController {
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Evento creado",
             content = @Content(schema = @Schema(implementation = EventoResponse.class))),
-        @ApiResponse(responseCode = "400", description = "Datos inválidos",
+        @ApiResponse(responseCode = "400", description = "Datos inválidos o fechas inconsistentes",
             content = @Content(schema = @Schema(implementation = ApiError.class),
-                examples = @ExampleObject(name = "Error 400", value = "{\"status\":400,\"message\":\"Error de validación\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"La solicitud contiene datos inválidos\"]}"))),
+                examples = @ExampleObject(name = "Error 400", value = "{\"status\":400,\"message\":\"Fechas invalidas\",\"timestamp\":\"2026-12-20T19:00:00\",\"errors\":[\"la fecha de finalización del evento debe ser posterior a la fecha de incio\"]}"))),
         @ApiResponse(responseCode = "401", description = "No autenticado"),
         @ApiResponse(responseCode = "403", description = "Se requiere rol ADMIN")
     })
@@ -60,18 +60,21 @@ public class EventoAdminController {
         return ResponseEntity.status(HttpStatus.CREATED).body(eventoAdminService.crear(eventoRequest));
     }
 
-    @Operation(summary = "Agregar tipo de boleto", description = "Agrega un tipo de boleto (precio, stock) a un evento. Requiere rol ADMIN.")
+    @Operation(summary = "Agregar tipo de boleto", description = "Agrega un tipo de boleto (precio, stock) a un evento que siga en BORRADOR; el nombre debe ser único por evento. Requiere rol ADMIN.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Tipo de boleto creado",
             content = @Content(schema = @Schema(implementation = TipoBoletoResponse.class))),
-        @ApiResponse(responseCode = "400", description = "Datos inválidos",
+        @ApiResponse(responseCode = "400", description = "Error de validación de campos",
             content = @Content(schema = @Schema(implementation = ApiError.class),
-                examples = @ExampleObject(name = "Error 400", value = "{\"status\":400,\"message\":\"Error de validación\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"La solicitud contiene datos inválidos\"]}"))),
+                examples = @ExampleObject(name = "Error 400", value = "{\"status\":400,\"message\":\"Error de validación\",\"timestamp\":\"2026-12-20T19:00:00\",\"errors\":[\"El nombre es obligatorio\"]}"))),
         @ApiResponse(responseCode = "401", description = "No autenticado"),
         @ApiResponse(responseCode = "403", description = "Se requiere rol ADMIN"),
         @ApiResponse(responseCode = "404", description = "Evento no encontrado",
             content = @Content(schema = @Schema(implementation = ApiError.class),
-                examples = @ExampleObject(name = "Error 404", value = "{\"status\":404,\"message\":\"Recurso no encontrado\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"Recurso no encontrado\"]}")))
+                examples = @ExampleObject(name = "Error 404", value = "{\"status\":404,\"message\":\"Evento no enontrado\",\"timestamp\":\"2026-12-20T19:00:00\",\"errors\":[\"Evento no encontrado\"]}"))),
+        @ApiResponse(responseCode = "409", description = "El evento no está en borrador o ya existe un tipo de boleto con ese nombre",
+            content = @Content(schema = @Schema(implementation = ApiError.class),
+                examples = @ExampleObject(name = "Error 409", value = "{\"status\":409,\"message\":\"Boleto existente\",\"timestamp\":\"2026-12-20T19:00:00\",\"errors\":[\"Ya existe un tipo de boleto con ese nombre\"]}")))
     })
     @PostMapping("/{eventoId}/agregar-tipo-boleto")
     public ResponseEntity<TipoBoletoResponse> agregarTipoBoleto(
@@ -80,7 +83,7 @@ public class EventoAdminController {
         return ResponseEntity.status(HttpStatus.CREATED).body(eventoAdminService.agregarTipoBoleto(eventoId, tipoBoletoRequest));
     }
 
-    @Operation(summary = "Publicar evento", description = "Cambia un evento de borrador a publicado. Requiere rol ADMIN.")
+    @Operation(summary = "Publicar evento", description = "Cambia un evento de BORRADOR a PUBLICADO. Requiere al menos un tipo de boleto y fecha de inicio futura. Requiere rol ADMIN.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Evento publicado",
             content = @Content(schema = @Schema(implementation = EventoResponse.class))),
@@ -88,10 +91,10 @@ public class EventoAdminController {
         @ApiResponse(responseCode = "403", description = "Se requiere rol ADMIN"),
         @ApiResponse(responseCode = "404", description = "Evento no encontrado",
             content = @Content(schema = @Schema(implementation = ApiError.class),
-                examples = @ExampleObject(name = "Error 404", value = "{\"status\":404,\"message\":\"Recurso no encontrado\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"Recurso no encontrado\"]}"))),
-        @ApiResponse(responseCode = "409", description = "El evento no está en estado publicable",
+                examples = @ExampleObject(name = "Error 404", value = "{\"status\":404,\"message\":\"Evento no enontrado\",\"timestamp\":\"2026-12-20T19:00:00\",\"errors\":[\"Evento no encontrado\"]}"))),
+        @ApiResponse(responseCode = "400", description = "El evento no está en borrador, no tiene tipos de boleto o la fecha de inicio no es futura",
             content = @Content(schema = @Schema(implementation = ApiError.class),
-                examples = @ExampleObject(name = "Error 409", value = "{\"status\":409,\"message\":\"Conflicto\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"Conflicto con el estado actual\"]}")))
+                examples = @ExampleObject(name = "Error 400", value = "{\"status\":400,\"message\":\"El evento debe tener un boleto\",\"timestamp\":\"2026-12-20T19:00:00\",\"errors\":[\"El evento debe tener al menos un tipo de boleto\"]}")))
     })
     @PostMapping("/{eventoId}/publicar")
     public ResponseEntity<EventoResponse> publicarEvento(
@@ -99,7 +102,7 @@ public class EventoAdminController {
         return ResponseEntity.ok(eventoAdminService.publicarEvento(eventoId));
     }
 
-    @Operation(summary = "Cancelar evento", description = "Cancela un evento publicado. Requiere rol ADMIN.")
+    @Operation(summary = "Cancelar evento", description = "Cancela el evento solo si su estado efectivo es PUBLICADO (no se puede cancelar un evento INICIADO o FINALIZADO). Invalida boletos activos y cancela reservas. Requiere rol ADMIN.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Evento cancelado",
             content = @Content(schema = @Schema(implementation = EventoResponse.class))),
@@ -107,7 +110,10 @@ public class EventoAdminController {
         @ApiResponse(responseCode = "403", description = "Se requiere rol ADMIN"),
         @ApiResponse(responseCode = "404", description = "Evento no encontrado",
             content = @Content(schema = @Schema(implementation = ApiError.class),
-                examples = @ExampleObject(name = "Error 404", value = "{\"status\":404,\"message\":\"Recurso no encontrado\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"Recurso no encontrado\"]}")))
+                examples = @ExampleObject(name = "Error 404", value = "{\"status\":404,\"message\":\"Evento no enontrado\",\"timestamp\":\"2026-12-20T19:00:00\",\"errors\":[\"Evento no encontrado\"]}"))),
+        @ApiResponse(responseCode = "409", description = "El estado efectivo del evento no es PUBLICADO",
+            content = @Content(schema = @Schema(implementation = ApiError.class),
+                examples = @ExampleObject(name = "Error 409", value = "{\"status\":409,\"message\":\"No se puede cancelar el evento\",\"timestamp\":\"2026-12-20T19:00:00\",\"errors\":[\"Solo se pueden cancelar eventos publicados\"]}")))
     })
     @PostMapping("/{eventoId}/cancelar")
     public ResponseEntity<EventoResponse> cancelarEvento(
@@ -122,10 +128,10 @@ public class EventoAdminController {
         @ApiResponse(responseCode = "403", description = "Se requiere rol ADMIN"),
         @ApiResponse(responseCode = "404", description = "Evento no encontrado",
             content = @Content(schema = @Schema(implementation = ApiError.class),
-                examples = @ExampleObject(name = "Error 404", value = "{\"status\":404,\"message\":\"Recurso no encontrado\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"Recurso no encontrado\"]}"))),
+                examples = @ExampleObject(name = "Error 404", value = "{\"status\":404,\"message\":\"Evento no enontrado\",\"timestamp\":\"2026-12-20T19:00:00\",\"errors\":[\"Evento no encontrado\"]}"))),
         @ApiResponse(responseCode = "409", description = "Solo se pueden eliminar borradores",
             content = @Content(schema = @Schema(implementation = ApiError.class),
-                examples = @ExampleObject(name = "Error 409", value = "{\"status\":409,\"message\":\"Conflicto\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"Conflicto con el estado actual\"]}")))
+                examples = @ExampleObject(name = "Error 409", value = "{\"status\":409,\"message\":\"No se puede eliminar el evento\",\"timestamp\":\"2026-12-20T19:00:00\",\"errors\":[\"Solo se pueden eliminar eventos en borrador\"]}")))
     })
     @DeleteMapping("/{eventoId}")
     public ResponseEntity<Void> eliminarBorrador(
@@ -134,7 +140,7 @@ public class EventoAdminController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Listar eventos (admin)", description = "Lista todos los eventos incluyendo borradores y cancelados. Requiere rol ADMIN.")
+    @Operation(summary = "Listar eventos (admin)", description = "Lista todos los eventos incluyendo borradores y cancelados; el campo estado es el estado efectivo calculado con las fechas (puede ser INICIADO o FINALIZADO aunque en BD diga PUBLICADO). Requiere rol ADMIN.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Listado obtenido",
             content = @Content(array = @ArraySchema(schema = @Schema(implementation = EventoListadoResponse.class)))),
@@ -146,7 +152,7 @@ public class EventoAdminController {
         return ResponseEntity.ok(eventoAdminService.obtenerEventos());
     }
 
-    @Operation(summary = "Ver evento (admin)", description = "Devuelve el detalle de cualquier evento por ID. Requiere rol ADMIN.")
+    @Operation(summary = "Ver evento (admin)", description = "Devuelve el detalle de cualquier evento por ID con su estado efectivo y disponibilidad calculada por tipo de boleto. Requiere rol ADMIN.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Detalle obtenido",
             content = @Content(schema = @Schema(implementation = EventoDetalleResponse.class))),
@@ -154,7 +160,7 @@ public class EventoAdminController {
         @ApiResponse(responseCode = "403", description = "Se requiere rol ADMIN"),
         @ApiResponse(responseCode = "404", description = "Evento no encontrado",
             content = @Content(schema = @Schema(implementation = ApiError.class),
-                examples = @ExampleObject(name = "Error 404", value = "{\"status\":404,\"message\":\"Recurso no encontrado\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"Recurso no encontrado\"]}")))
+                examples = @ExampleObject(name = "Error 404", value = "{\"status\":404,\"message\":\"Evento no enontrado\",\"timestamp\":\"2026-12-20T19:00:00\",\"errors\":[\"Evento no encontrado\"]}")))
     })
     @GetMapping("/{eventoId}/obtener")
     public ResponseEntity<EventoDetalleResponse> obtenerEventoPorId(

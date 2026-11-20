@@ -15,10 +15,10 @@ public class UsarBoletoResponse {
     private String evento;
     @Schema(description = "Titular del boleto", example = "Aldo Rojas")
     private String titular;
-    @Schema(description = "Folio / código QR", example = "EVT-AB12CD34")
+    @Schema(description = "Folio del boleto (UUID distinto del código QR escaneado)", example = "550e8400-e29b-41d4-a716-446655440000")
     private String folio;
     @Schema(description = "Estado final del boleto", example = "UTILIZADO")
     private EstadoBoleto estado;
-    @Schema(description = "Mensaje de confirmación", example = "Ingreso registrado correctamente")
+    @Schema(description = "Mensaje de confirmación", example = "Acceso permitido")
     private String mensaje;
 }

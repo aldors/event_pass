@@ -42,12 +42,12 @@ public class AuthController {
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Usuario registrado",
             content = @Content(schema = @Schema(implementation = RegistroResponse.class))),
-        @ApiResponse(responseCode = "400", description = "Datos inválidos",
+        @ApiResponse(responseCode = "400", description = "Error de validación de campos",
             content = @Content(schema = @Schema(implementation = ApiError.class),
-                examples = @ExampleObject(name = "Error 400", value = "{\"status\":400,\"message\":\"Error de validación\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"La solicitud contiene datos inválidos\"]}"))),
+                examples = @ExampleObject(name = "Error 400", value = "{\"status\":400,\"message\":\"Error de validación\",\"timestamp\":\"2026-12-20T19:00:00\",\"errors\":[\"El correo electrónico es obligatorio\"]}"))),
         @ApiResponse(responseCode = "409", description = "Email ya registrado",
             content = @Content(schema = @Schema(implementation = ApiError.class),
-                examples = @ExampleObject(name = "Error 409", value = "{\"status\":409,\"message\":\"Conflicto\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"Conflicto con el estado actual\"]}")))
+                examples = @ExampleObject(name = "Error 409", value = "{\"status\":409,\"message\":\"Email en uso por otro usuario\",\"timestamp\":\"2026-12-20T19:00:00\",\"errors\":[\"El email 'aldo@email.com' ya está en uso\"]}")))
     })
     @PostMapping("/registro")
     public ResponseEntity<RegistroResponse> registro(@Valid @RequestBody RegistroRequest registroRequest){
@@ -58,34 +58,43 @@ public class AuthController {
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Login exitoso",
             content = @Content(schema = @Schema(implementation = LoginResponse.class))),
-        @ApiResponse(responseCode = "400", description = "Datos inválidos",
+        @ApiResponse(responseCode = "400", description = "Error de validación de campos",
             content = @Content(schema = @Schema(implementation = ApiError.class),
-                examples = @ExampleObject(name = "Error 400", value = "{\"status\":400,\"message\":\"Error de validación\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"La solicitud contiene datos inválidos\"]}"))),
-        @ApiResponse(responseCode = "401", description = "Credenciales incorrectas")
+                examples = @ExampleObject(name = "Error 400", value = "{\"status\":400,\"message\":\"Error de validación\",\"timestamp\":\"2026-12-20T19:00:00\",\"errors\":[\"El correo electrónico es obligatorio\"]}"))),
+        @ApiResponse(responseCode = "401", description = "Credenciales incorrectas"),
+        @ApiResponse(responseCode = "404", description = "Usuario no encontrado",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest){
         return ResponseEntity.ok(authService.login(loginRequest));
     }
 
-    @Operation(summary = "Renovar tokens", description = "Genera nuevos tokens a partir de un refresh token válido. Endpoint público.", security = {})
+    @Operation(summary = "Renovar tokens", description = "Genera un nuevo access token a partir de un refresh token válido; el refresh token se devuelve sin cambios. Endpoint público.", security = {})
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Tokens renovados",
             content = @Content(schema = @Schema(implementation = LoginResponse.class))),
-        @ApiResponse(responseCode = "400", description = "Datos inválidos",
+        @ApiResponse(responseCode = "400", description = "Error de validación de campos",
             content = @Content(schema = @Schema(implementation = ApiError.class),
-                examples = @ExampleObject(name = "Error 400", value = "{\"status\":400,\"message\":\"Error de validación\",\"timestamp\":\"2026-10-08T10:00:00\",\"errors\":[\"La solicitud contiene datos inválidos\"]}"))),
-        @ApiResponse(responseCode = "401", description = "Refresh token inválido o expirado")
+                examples = @ExampleObject(name = "Error 400", value = "{\"status\":400,\"message\":\"Error de validación\",\"timestamp\":\"2026-12-20T19:00:00\",\"errors\":[\"El refresh token es obligatorio\"]}"))),
+        @ApiResponse(responseCode = "401", description = "Refresh token inválido o expirado"),
+        @ApiResponse(responseCode = "404", description = "Refresh token no encontrado",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     @PostMapping("/refresh-token")
     public ResponseEntity<LoginResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest refreshTokenRequest){
         return ResponseEntity.ok(authService.refreshToken(refreshTokenRequest));
     }
 
-    @Operation(summary = "Cerrar sesión", description = "Invalida el refresh token. Requiere JWT.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Cerrar sesión", description = "Invalida el refresh token. Requiere JWT con rol USER, ADMIN o STAFF.", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Sesión cerrada"),
-        @ApiResponse(responseCode = "401", description = "No autenticado")
+        @ApiResponse(responseCode = "200", description = "Sesión cerrada",
+            content = @Content(schema = @Schema(type = "string", example = "Sesión cerrada..."))),
+        @ApiResponse(responseCode = "400", description = "Error de validación de campos",
+            content = @Content(schema = @Schema(implementation = ApiError.class))),
+        @ApiResponse(responseCode = "401", description = "No autenticado"),
+        @ApiResponse(responseCode = "404", description = "Refresh token no encontrado",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/logout")
@@ -93,11 +102,13 @@ public class AuthController {
         return ResponseEntity.ok(authService.logout(logoutRequest));
     }
 
-    @Operation(summary = "Obtener perfil actual", description = "Devuelve los datos del usuario autenticado y su rol. Requiere JWT.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Obtener perfil actual", description = "Devuelve los datos del usuario autenticado y su rol (USER, ADMIN o STAFF). Requiere JWT.", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Perfil obtenido",
             content = @Content(schema = @Schema(implementation = MeResponse.class))),
-        @ApiResponse(responseCode = "401", description = "No autenticado")
+        @ApiResponse(responseCode = "401", description = "No autenticado"),
+        @ApiResponse(responseCode = "404", description = "Usuario no encontrado",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")

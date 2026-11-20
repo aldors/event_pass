@@ -26,8 +26,8 @@ public class CompraResumenResponse {
     private int cantidadBoletos;
     @Schema(description = "Total de la compra", example = "500.00")
     private BigDecimal total;
-    @Schema(description = "Fecha de reserva", example = "2026-10-08T10:00:00")
+    @Schema(description = "Fecha de reserva", example = "2026-12-20T19:00:00")
     private LocalDateTime fechaReserva;
-    @Schema(description = "Fecha de expiración (si sigue pendiente)", example = "2026-10-08T10:15:00")
+    @Schema(description = "Fecha límite de la reserva o sesión de pago; se devuelve también en compras pagadas y puede estar en el pasado", example = "2026-12-20T19:30:00")
     private LocalDateTime fechaExpiracion;
 }

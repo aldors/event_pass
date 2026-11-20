@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-@Schema(description = "Tipo de boleto con disponibilidad para compra")
+@Schema(description = "Tipo de boleto con disponibilidad calculada (0 = agotado)")
 public class TipoBoletoDisponibleResponse {
     
     @Schema(description = "ID del tipo de boleto", example = "1")
@@ -19,6 +19,6 @@ public class TipoBoletoDisponibleResponse {
     private BigDecimal precio;
     @Schema(description = "Cantidad total", example = "100")
     private Integer cantidadTotal;
-    @Schema(description = "Boletos aún disponibles", example = "75")
+    @Schema(description = "Boletos disponibles restantes (0 si no hay cupo)", example = "75")
     private Integer disponibles;
 }

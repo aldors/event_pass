@@ -19,8 +19,8 @@ public class EventoListadoResponse {
     private String nombre;
     @Schema(description = "Ubicación del evento", example = "Auditorio Nacional, CDMX")
     private String ubicacion;
-    @Schema(description = "Fecha y hora de inicio", example = "2026-11-20T19:00:00")
+    @Schema(description = "Fecha y hora de inicio", example = "2026-12-20T19:00:00")
     private LocalDateTime fechaInicio;
-    @Schema(description = "Estado del evento", example = "PUBLICADO")
+    @Schema(description = "Estado efectivo del evento calculado con las fechas (PUBLICADO o INICIADO en el catálogo público)", example = "INICIADO")
     private EstadoEvento estado;
 }

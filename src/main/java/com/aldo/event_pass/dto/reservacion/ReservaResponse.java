@@ -16,6 +16,6 @@ public class ReservaResponse {
     private Long compraId;
     @Schema(description = "Total a pagar", example = "500.00")
     private BigDecimal total;
-    @Schema(description = "Fecha límite para pagar", example = "2026-10-09T12:00:00")
+    @Schema(description = "Fecha límite de la reserva (15 minutos desde la creación)", example = "2026-12-20T19:15:00")
     private LocalDateTime expiraEn;
 }

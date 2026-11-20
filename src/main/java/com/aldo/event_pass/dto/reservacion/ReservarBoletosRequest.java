@@ -2,6 +2,7 @@ package com.aldo.event_pass.dto.reservacion;
 
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -20,7 +21,9 @@ public class ReservarBoletosRequest {
     @Positive(message = "El id del evento debe ser mayor a cero")
     private Long eventoId;
 
-    @Schema(description = "Boletos a reservar (uno por titular)")
+    @ArraySchema(schema = @Schema(implementation = BoletoReservaRequest.class),
+            arraySchema = @Schema(description = "Boletos a reservar (uno por titular)",
+                    example = "[{\"tipoBoletoId\":1,\"titular\":\"Aldo Ruiz\"}]"))
     @Valid
     @NotEmpty(message = "Debe seleccionar al menos un boleto")
     private List<BoletoReservaRequest> boletos;
