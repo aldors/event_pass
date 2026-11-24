@@ -24,15 +24,15 @@ public interface CompraRepository extends JpaRepository<Compra, Long> {
     )
     @Query("""
     UPDATE Compra c
-    SET c.estado = 'EXPIRADA'
-    WHERE c.estado = 'RESERVADA'
+    SET c.estado = EXPIRADA
+    WHERE c.estado = RESERVADA
     AND c.fechaExpiracionReserva < CURRENT_TIMESTAMP
     AND NOT EXISTS (
         SELECT p.id
         FROM Pago p
         WHERE p.compra = c
             AND p.proveedor = 'STRIPE'
-            AND p.estado = 'PENDIENTE'
+            AND p.estado = PENDIENTE
     )
     """)
     int expirarReservasVencidas();
@@ -40,8 +40,8 @@ public interface CompraRepository extends JpaRepository<Compra, Long> {
     @Modifying
     @Query("""
     UPDATE Compra c
-    SET c.estado = 'CANCELADA'
-    WHERE c.estado = 'RESERVADA'
+    SET c.estado = CANCELADA
+    WHERE c.estado = RESERVADA
     AND EXISTS (
         SELECT 1 FROM DetalleCompra dc
         WHERE dc.compra = c
@@ -53,8 +53,8 @@ public interface CompraRepository extends JpaRepository<Compra, Long> {
     @Modifying
     @Query("""
     UPDATE Compra c
-    SET c.estado = 'EXPIRADA'
-    WHERE c.estado = 'RESERVADA'
+    SET c.estado = EXPIRADA
+    WHERE c.estado = RESERVADA
     AND EXISTS (
         SELECT 1 FROM DetalleCompra dc
         WHERE dc.compra = c

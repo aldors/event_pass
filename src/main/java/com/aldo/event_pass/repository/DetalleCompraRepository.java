@@ -15,10 +15,10 @@ public interface DetalleCompraRepository extends JpaRepository<DetalleCompra, Lo
     FROM DetalleCompra dc
     WHERE dc.tipoBoleto.id = :tipoBoletoId
     AND (
-        dc.compra.estado = 'PAGADA'
+        dc.compra.estado = PAGADA
         OR
         (
-            dc.compra.estado = 'RESERVADA'
+            dc.compra.estado = RESERVADA
             AND dc.compra.fechaExpiracionReserva > CURRENT_TIMESTAMP
         )
     )

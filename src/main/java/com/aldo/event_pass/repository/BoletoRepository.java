@@ -17,10 +17,10 @@ public interface BoletoRepository extends JpaRepository<Boleto, Long> {
     WHERE b.detalleCompra.compra.usuario.id = :usuarioId
     AND b.detalleCompra.tipoBoleto.evento.id = :eventoId
     AND (
-        b.detalleCompra.compra.estado = 'PAGADA'
+        b.detalleCompra.compra.estado = PAGADA
         OR
         (
-            b.detalleCompra.compra.estado = 'RESERVADA'
+            b.detalleCompra.compra.estado = RESERVADA
             AND b.detalleCompra.compra.fechaExpiracionReserva > CURRENT_TIMESTAMP
         )
     )
@@ -28,21 +28,21 @@ public interface BoletoRepository extends JpaRepository<Boleto, Long> {
     Long contarBoletosUsuarioPorEvento(Long usuarioId, Long eventoId);
     Optional<Boleto> findByCodigoQr(String codigoQr);
 
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("""
     UPDATE Boleto b
-    SET b.estado = 'INVALIDADO'
-    WHERE b.estado = 'ACTIVO'
+    SET b.estado = INVALIDADO
+    WHERE b.estado = ACTIVO
     AND b.detalleCompra.tipoBoleto.evento.id = :eventoId
     """)
     int invalidarBoletosActivosPorEvento(@Param("eventoId") Long eventoId);
 
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("""
     UPDATE Boleto b
-    SET b.estado = 'INVALIDADO'
-    WHERE b.estado = 'ACTIVO'
-    AND b.detalleCompra.compra.estado = 'PAGADA'
+    SET b.estado = INVALIDADO
+    WHERE b.estado = ACTIVO
+    AND b.detalleCompra.compra.estado = PAGADA
     AND b.detalleCompra.tipoBoleto.evento.id = :eventoId
     """)
     int invalidarBoletosActivosPagadosPorEvento(@Param("eventoId") Long eventoId);
