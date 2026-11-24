@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -95,7 +96,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = {DisabledException.class, RefreshTokenExpiradoException.class})
     public LoginResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
         
         RefreshToken refreshTokenEntity = refreshTokenRepository.findByToken(refreshTokenRequest.getRefreshToken())
@@ -110,6 +111,11 @@ public class AuthServiceImpl implements AuthService {
         String email = usuario.getEmail();
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+
+        if(!userDetails.isEnabled()){
+            refreshTokenRepository.deleteByUsuario(usuario);
+            throw new DisabledException("La cuenta está desactivada");
+        }
 
         if(!jwtService.isValid(refreshTokenRequest.getRefreshToken(), userDetails)){
             throw new RefreshTokenNoValidoException();
