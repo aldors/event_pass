@@ -51,7 +51,7 @@ public class EventoAdminServiceImpl implements EventoAdminService {
     @Transactional
     public EventoResponse crear(EventoRequest eventoRequest) {
 
-        if(eventoRequest.getFechaFin().isBefore(eventoRequest.getFechaInicio())){
+        if(!eventoRequest.getFechaFin().isAfter(eventoRequest.getFechaInicio())){
             throw new FechaFinPosteriorAInicioException();
         }
 
@@ -99,6 +99,10 @@ public class EventoAdminServiceImpl implements EventoAdminService {
 
         if(!evento.getFechaInicio().isAfter(LocalDateTime.now())) {
             throw new FechaInicioFuturaException();
+        }
+
+        if(!evento.getFechaFin().isAfter(evento.getFechaInicio())) {
+            throw new FechaFinPosteriorAInicioException();
         }
 
         evento.setEstado(EstadoEvento.PUBLICADO);
