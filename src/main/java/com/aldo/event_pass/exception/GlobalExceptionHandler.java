@@ -6,7 +6,10 @@ import java.util.stream.Collectors;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -38,6 +41,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(apiError);
     }
 
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiError> handleAuthentication(AuthenticationException ex) {
+
+        ApiError apiError = new ApiError(
+                HttpStatus.UNAUTHORIZED.value(),
+                "No autenticado",
+                List.of("Se requiere autenticación para realizar esta solicitud")
+        );
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(apiError);
+    }
+
     // Manejo de errores de autenticación, como credenciales incorrectas al iniciar sesión
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiError> handleBadCredentials(BadCredentialsException ex) {
@@ -49,6 +64,18 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(apiError);
+    }
+
+    @ExceptionHandler({ AccessDeniedException.class, AuthorizationDeniedException.class })
+    public ResponseEntity<ApiError> handleAccessDenied(Exception ex) {
+
+        ApiError apiError = new ApiError(
+                HttpStatus.FORBIDDEN.value(),
+                "Acceso denegado",
+                List.of("No tienes permiso para realizar esta acción")
+        );
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(apiError);
     }
 
     // Manejo de concurrencia si dos usuarios intentan registrar
