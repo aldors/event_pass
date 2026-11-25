@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.aldo.event_pass.exception.ApiError.ApiError;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RestControllerAdvice 
 public class GlobalExceptionHandler {
     
@@ -65,11 +68,13 @@ public class GlobalExceptionHandler {
     // Manejo general de excepciones no controladas
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGeneral(Exception ex) {
-            
+
+        log.error("Error no controlado al procesar la solicitud", ex);
+
         ApiError apiError = new ApiError(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Error interno del servidor",
-                List.of(ex.getMessage())
+                List.of("Ha ocurrido un error inesperado. Inténtalo de nuevo más tarde")
         );
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiError);
