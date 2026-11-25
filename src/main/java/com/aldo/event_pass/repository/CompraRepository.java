@@ -37,7 +37,10 @@ public interface CompraRepository extends JpaRepository<Compra, Long> {
     """)
     int expirarReservasVencidas();
 
-    @Modifying
+    @Modifying(
+        flushAutomatically = true,
+        clearAutomatically = true
+    )
     @Query("""
     UPDATE Compra c
     SET c.estado = CANCELADA
@@ -50,7 +53,10 @@ public interface CompraRepository extends JpaRepository<Compra, Long> {
     """)
     int cancelarReservasPorEvento(@Param("eventoId") Long eventoId);
 
-    @Modifying
+    @Modifying(
+        flushAutomatically = true,
+        clearAutomatically = true
+    )
     @Query("""
     UPDATE Compra c
     SET c.estado = EXPIRADA
