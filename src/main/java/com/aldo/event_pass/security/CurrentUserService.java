@@ -27,6 +27,6 @@ public class CurrentUserService {
         
         String email = authentication.getName();
 
-        return usuarioRepository.findByEmail(email).orElseThrow(() -> new UsuarioNoEncontradoException());
+        return usuarioRepository.findByEmailIgnoreCase(email).orElseThrow(() -> new UsuarioNoEncontradoException());
     }
 }

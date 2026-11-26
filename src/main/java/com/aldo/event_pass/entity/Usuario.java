@@ -3,6 +3,7 @@ package com.aldo.event_pass.entity;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import com.aldo.event_pass.enums.Role;
 
@@ -65,6 +66,7 @@ public class Usuario {
 
         this.fechaCreacion = ahora;
         this.fechaActualizacion = ahora;
+        normalizarEmail();
 
         if (this.activo == null) {
             this.activo = true;
@@ -74,5 +76,12 @@ public class Usuario {
     @PreUpdate
     public void preUpdate() {
         this.fechaActualizacion = LocalDateTime.now();
+        normalizarEmail();
+    }
+
+    private void normalizarEmail() {
+        if (this.email != null) {
+            this.email = this.email.trim().toLowerCase(Locale.ROOT);
+        }
     }
 }

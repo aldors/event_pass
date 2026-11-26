@@ -3,6 +3,7 @@ package com.aldo.event_pass.service.implementaciones;
 import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -52,15 +53,21 @@ public class AuthServiceImpl implements AuthService {
     private long jwtExpirationRefreshToken;
 
     @Override
+    @Transactional
     public RegistroResponse registro(RegistroRequest registroRequest) {
 
-        if(usuarioRepository.findByEmail(registroRequest.getEmail()).isPresent()){
+        if(usuarioRepository.findByEmailIgnoreCase(registroRequest.getEmail()).isPresent()){
             throw new EmailExistenteException(registroRequest.getEmail());
         }
 
         Usuario usuario = RegistroMapper.toEntity(registroRequest);
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
-        return RegistroMapper.toResponse(usuarioRepository.save(usuario));
+
+        try {
+            return RegistroMapper.toResponse(usuarioRepository.saveAndFlush(usuario));
+        } catch (DataIntegrityViolationException ex) {
+            throw new EmailExistenteException(registroRequest.getEmail());
+        }
     }
 
     @Override
@@ -76,7 +83,7 @@ public class AuthServiceImpl implements AuthService {
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(loginRequest.getEmail());
 
-        Usuario usuario = usuarioRepository.findByEmail(loginRequest.getEmail())
+        Usuario usuario = usuarioRepository.findByEmailIgnoreCase(loginRequest.getEmail())
         .orElseThrow(() -> new UsuarioNoEncontradoException());
         
         refreshTokenRepository.deleteByUsuario(usuario);
