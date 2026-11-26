@@ -107,4 +107,14 @@ public interface CompraRepository extends JpaRepository<Compra, Long> {
     AND c.usuario.id = :usuarioId
     """)
     Optional<Compra> buscarMiCompraConDetalles(@Param("compraId") Long compraId, @Param("usuarioId") Long usuarioId);
+
+    @Query("""
+    SELECT DISTINCT c FROM Compra c
+    LEFT JOIN FETCH c.detalles dc
+    LEFT JOIN FETCH dc.tipoBoleto tb
+    WHERE c.id = :compraId
+    AND c.usuario.id = :usuarioId
+    """)
+    Optional<Compra> findParaCheckout(@Param("compraId") Long compraId, @Param("usuarioId") Long usuarioId);
+
 }

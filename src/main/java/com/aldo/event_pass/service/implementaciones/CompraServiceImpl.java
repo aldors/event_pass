@@ -61,9 +61,11 @@ import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CompraServiceImpl implements CompraService {
 
     private final CurrentUserService currentUserService;
@@ -75,6 +77,7 @@ public class CompraServiceImpl implements CompraService {
     private final PagoRepository pagoRepository;
     private final StripeClient stripeClient;
     private final StripeWebhookService stripeWebhookService;
+    private final PagoTransaccionService pagoTransaccionService;
 
     private static final int RESERVA_MINUTOS = 15;
     private static final int STRIPE_SESION_MINUTOS = 30;
@@ -209,28 +212,14 @@ public class CompraServiceImpl implements CompraService {
     }
 
     @Override
-    // Los throws de negocio al final del reuse (ya-pagada / expirada)
-    // no deben revertir la reconciliación que se acabó de guardar.
-    @Transactional(noRollbackFor = {ReservaExpiradaException.class, CompraYaPagadaException.class})
     public CheckoutResponse pagar(Long compraId) {
 
         Usuario usuario = currentUserService.obtenerUsuarioActual();
 
-        // Se gurada la compra 'reservada'
-        Compra compra = compraRepository.findByIdAndUsuarioId(compraId, usuario.getId())
+        Compra compra = compraRepository.findParaCheckout(compraId, usuario.getId())
             .orElseThrow(() -> new CompraNoEncontradaException());
 
-        if (compra.getEstado() == EstadoCompra.PAGADA) {
-            throw new CompraYaPagadaException();
-        }
-
-        if(compra.getEstado() != EstadoCompra.RESERVADA){
-            throw new CompraNoReservadaException();
-        }
-
-        if(compra.getFechaExpiracionReserva().isBefore(LocalDateTime.now())){
-            throw new ReservaExpiradaException();
-        }
+        validarReserva(compra);
 
         var pagoPendiente = pagoRepository.findFirstByCompraIdAndProveedorAndEstadoOrderByFechaCreacionDesc(
             compraId,
@@ -238,145 +227,121 @@ public class CompraServiceImpl implements CompraService {
             EstadoPago.PENDIENTE
         );
 
-        if (pagoPendiente.isPresent()) {
+        if (pagoPendiente.isPresent() && pagoPendiente.get().getUrlCheckout() != null) {
+
             Pago pago = pagoPendiente.get();
+            Session vigente = obtenerSesion(pago.getIdPagoExterno());
 
-            if (pago.getUrlCheckout() != null) {
-                final Session vigente;
-                try {
-                    vigente = stripeClient.v1().checkout().sessions().retrieve(pago.getIdPagoExterno());
-                } catch (StripeException e) {
-                    throw new StripeNoDisponibleException("No fue posible validar la sesión de pago con Stripe.", e);
-                }
-
-                if ("open".equals(vigente.getStatus())) {
-                    return new CheckoutResponse(
-                        compra.getId(),
-                        pago.getEstado().name(),
-                        pago.getUrlCheckout()
-                    );
-                }
-
-                // La sesión ya no está abierta: reconciliar y decidir.
-                // Nunca se devuelve una URL muerta al frontend.
-                stripeWebhookService.procesarSesionReconciliada(vigente);
-
-                Compra actual = compraRepository.findByIdAndUsuarioId(compraId, usuario.getId())
-                    .orElseThrow(() -> new CompraNoEncontradaException());
-
-                if (actual.getEstado() == EstadoCompra.PAGADA) {
-                    throw new CompraYaPagadaException();
-                }
-
-                if (actual.getFechaExpiracionReserva().isBefore(LocalDateTime.now())) {
-                    throw new ReservaExpiradaException();
-                }
-                // Sesión muerta pero reserva vigente: se sigue al flujo de
-                // creación y se genera una sesión nueva (el pago viejo quedó
-                // EXPIRADO y ya no estorba).
+            if ("open".equals(vigente.getStatus())) {
+                return new CheckoutResponse(
+                    compra.getId(),
+                    pago.getEstado().name(),
+                    pago.getUrlCheckout()
+                );
             }
+
+            stripeWebhookService.procesarSesionReconciliada(vigente);
+
+            Compra actual = compraRepository.findParaCheckout(compraId, usuario.getId())
+                .orElseThrow(() -> new CompraNoEncontradaException());
+
+            validarTrasReconciliar(actual);
+        }
+
+        if (compra.getDetalles().isEmpty()) {
+            throw new CompraVaciaException();
+        }
+
+        SessionCreateParams.Builder paramsBuilder = SessionCreateParams.builder()
+                .setMode(SessionCreateParams.Mode.PAYMENT)
+                .addAllowedPaymentMethodType(SessionCreateParams.AllowedPaymentMethodType.CARD)
+                .setClientReferenceId(compra.getId().toString())
+                .putMetadata(
+                    "compraId",
+                    compra.getId().toString()
+                )
+                .setSuccessUrl(
+                    frontendUrl
+                        + "/index.html?payment=success"
+                        + "&compra_id=" + compra.getId()
+                        + "&session_id={CHECKOUT_SESSION_ID}"
+                )
+                .setCancelUrl(
+                    frontendUrl
+                        + "/index.html?payment=cancelled"
+                        + "&compra_id=" + compra.getId()
+                )
+                .setExpiresAt(
+                    Instant.now()
+                        .plus(STRIPE_SESION_MINUTOS, ChronoUnit.MINUTES)
+                        .getEpochSecond()
+                );
+
+        for (DetalleCompra detalle : compra.getDetalles()) {
+
+            long cantidad = detalle.getCantidad().longValue();
+
+            long precioEnCentavos = detalle
+                .getPrecioUnitario()
+                .movePointRight(2)
+                .longValueExact();
+
+            if (cantidad <= 0 || precioEnCentavos < 0) {
+                throw new CompraInvalidaException();
+            }
+
+            SessionCreateParams.LineItem lineItem = SessionCreateParams.LineItem.builder()
+                    .setQuantity(cantidad)
+                    .setPriceData(
+                        SessionCreateParams.LineItem.PriceData.builder()
+                            .setCurrency(stripeCurrency.toLowerCase())
+                            .setUnitAmount(precioEnCentavos)
+                            .setProductData(
+                                SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                    .setName(
+                                        detalle.getTipoBoleto().getNombre()
+                                    )
+                                    .build()
+                            )
+                            .build()
+                    )
+                    .build();
+
+            paramsBuilder.addLineItem(lineItem);
+        }
+
+        final Session session;
+
+        try {
+            session = stripeClient.v1().checkout().sessions().create(paramsBuilder.build());
+        } catch (StripeException e) {
+            throw new NoFuePosibleIniciarCheckoutException(e);
+        }
+
+        if (session.getUrl() == null) {
+            throw new SesionDeCheckoutNoDevueltaException();
         }
 
         try {
-            List<DetalleCompra> detalles = detalleCompraRepository.findByCompraId(compra.getId());
-
-            if (detalles.isEmpty()) {
-                throw new CompraVaciaException();
-            }
-
-            SessionCreateParams.Builder paramsBuilder = SessionCreateParams.builder()
-                    .setMode(SessionCreateParams.Mode.PAYMENT)
-                    .addAllowedPaymentMethodType(SessionCreateParams.AllowedPaymentMethodType.CARD)
-                    .setClientReferenceId(compra.getId().toString())
-                    .putMetadata(
-                        "compraId",
-                        compra.getId().toString()
-                    )
-                    .setSuccessUrl(
-                        frontendUrl
-                            + "/index.html?payment=success"
-                            + "&compra_id=" + compra.getId()
-                            + "&session_id={CHECKOUT_SESSION_ID}"
-                    )
-                    .setCancelUrl(
-                        frontendUrl
-                            + "/index.html?payment=cancelled"
-                            + "&compra_id=" + compra.getId()
-                    )
-                    .setExpiresAt(
-                        Instant.now()
-                            .plus(STRIPE_SESION_MINUTOS, ChronoUnit.MINUTES)
-                            .getEpochSecond()
-                    );
-
-            for (DetalleCompra detalle : detalles) {
-
-                long cantidad = detalle.getCantidad().longValue();
-
-                long precioEnCentavos = detalle
-                    .getPrecioUnitario()
-                    .movePointRight(2)
-                    .longValueExact();
-
-                if (cantidad <= 0 || precioEnCentavos < 0) {
-                    throw new CompraInvalidaException();
-                }
-
-                SessionCreateParams.LineItem lineItem = SessionCreateParams.LineItem.builder()
-                        .setQuantity(cantidad)
-                        .setPriceData(
-                            SessionCreateParams.LineItem.PriceData.builder()
-                                .setCurrency(stripeCurrency.toLowerCase())
-                                .setUnitAmount(precioEnCentavos)
-                                .setProductData(
-                                    SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                        .setName(
-                                            detalle.getTipoBoleto().getNombre()
-                                        )
-                                        .build()
-                                )
-                                .build()
-                        )
-                        .build();
-
-                paramsBuilder.addLineItem(lineItem);
-            }
-
-            Session session = stripeClient.v1().checkout().sessions().create(paramsBuilder.build());
-
-            if (session.getUrl() == null) {
-                throw new SesionDeCheckoutNoDevueltaException();
-            }
-
-            Pago pago = Pago.builder()
-                .compra(compra)
-                .proveedor("STRIPE")
-                .idPagoExterno(session.getId())
-                .urlCheckout(session.getUrl())
-                .monto(compra.getTotal())
-                .estado(EstadoPago.PENDIENTE)
-                .build();
-
-            pagoRepository.save(pago);
-
-            compra.setFechaExpiracionReserva(LocalDateTime.now().plusMinutes(STRIPE_SESION_MINUTOS));
-
-            compraRepository.save(compra);
-
-            return new CheckoutResponse(compra.getId(), pago.getEstado().name(), pago.getUrlCheckout());
-        
-        } catch (StripeException e) {
-            throw new NoFuePosibleIniciarCheckoutException(e);
+            return pagoTransaccionService.registrarSesion(
+                compraId,
+                usuario.getId(),
+                session,
+                STRIPE_SESION_MINUTOS
+            );
+        } catch (CompraNoEncontradaException | CompraNoReservadaException
+                | CompraYaPagadaException | ReservaExpiradaException ex) {
+            expirarSesionStripe(session.getId());
+            throw ex;
         }
     }
 
     @Override
-    @Transactional
     public CompraDetalleResponse verificarPago(Long compraId) {
 
         Usuario usuario = currentUserService.obtenerUsuarioActual();
 
-        compraRepository.findByIdAndUsuarioId(compraId, usuario.getId())
+        compraRepository.buscarMiCompra(compraId, usuario.getId())
             .orElseThrow(() -> new CompraNoEncontradaException());
 
         pagoRepository.findFirstByCompraIdAndProveedorAndEstadoOrderByFechaCreacionDesc(
@@ -384,12 +349,8 @@ public class CompraServiceImpl implements CompraService {
             "STRIPE",
             EstadoPago.PENDIENTE
         ).ifPresent(pago -> {
-            try {
-                Session session = stripeClient.v1().checkout().sessions().retrieve(pago.getIdPagoExterno());
-                stripeWebhookService.procesarSesionReconciliada(session);
-            } catch (StripeException e) {
-                throw new StripeNoDisponibleException("No fue posible verificar el pago con Stripe.", e);
-            }
+            Session session = obtenerSesion(pago.getIdPagoExterno());
+            stripeWebhookService.procesarSesionReconciliada(session);
         });
 
         return obtenerCompraPorId(compraId);
@@ -463,6 +424,50 @@ public class CompraServiceImpl implements CompraService {
         );
     }
 
+
+    private Session obtenerSesion(String idPagoExterno) {
+
+        try {
+            return stripeClient.v1().checkout().sessions().retrieve(idPagoExterno);
+        } catch (StripeException e) {
+            throw new StripeNoDisponibleException("No fue posible validar la sesión de pago con Stripe.", e);
+        }
+    }
+
+    private void expirarSesionStripe(String sessionId) {
+
+        try {
+            stripeClient.v1().checkout().sessions().expire(sessionId);
+        } catch (StripeException e) {
+            log.warn("No se pudo expirar la sesión de Stripe {} de una compra ya inválida.", sessionId, e);
+        }
+    }
+
+    private void validarReserva(Compra compra) {
+
+        if (compra.getEstado() == EstadoCompra.PAGADA) {
+            throw new CompraYaPagadaException();
+        }
+
+        if (compra.getEstado() != EstadoCompra.RESERVADA) {
+            throw new CompraNoReservadaException();
+        }
+
+        if (compra.getFechaExpiracionReserva().isBefore(LocalDateTime.now())) {
+            throw new ReservaExpiradaException();
+        }
+    }
+
+    private void validarTrasReconciliar(Compra compra) {
+
+        if (compra.getEstado() == EstadoCompra.PAGADA) {
+            throw new CompraYaPagadaException();
+        }
+
+        if (compra.getFechaExpiracionReserva().isBefore(LocalDateTime.now())) {
+            throw new ReservaExpiradaException();
+        }
+    }
 
     /*
      * Replica las reglas de BoletoServiceImpl.generarPdf sin lanzar:
