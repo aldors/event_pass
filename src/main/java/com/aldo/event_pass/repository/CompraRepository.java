@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.aldo.event_pass.dto.projection.CompraResumenProjection;
 import com.aldo.event_pass.entity.Compra;
 
 import jakarta.persistence.LockModeType;
@@ -72,9 +73,38 @@ public interface CompraRepository extends JpaRepository<Compra, Long> {
     List<Compra> findByUsuarioIdOrderByFechaCreacionDesc(Long usuarioId);
 
     @Query("""
+    SELECT c.id AS compraId,
+           MIN(e.nombre) AS nombreEvento,
+           MIN(e.id) AS eventoId,
+           c.estado AS estado,
+           COALESCE(SUM(dc.cantidad), 0) AS cantidadBoletos,
+           c.total AS total,
+           c.fechaCreacion AS fechaReserva,
+           c.fechaExpiracionReserva AS fechaExpiracion
+    FROM Compra c
+    LEFT JOIN c.detalles dc
+    LEFT JOIN dc.tipoBoleto tb
+    LEFT JOIN tb.evento e
+    WHERE c.usuario.id = :usuarioId
+    GROUP BY c.id, c.estado, c.total, c.fechaCreacion, c.fechaExpiracionReserva
+    ORDER BY c.fechaCreacion DESC
+    """)
+    List<CompraResumenProjection> findResumenByUsuarioId(@Param("usuarioId") Long usuarioId);
+
+    @Query("""
     SELECT c FROM Compra c
     WHERE c.id = :compraId
     AND c.usuario.id = :usuarioId
     """)
     Optional<Compra> buscarMiCompra(@Param("compraId") Long compraId, @Param("usuarioId") Long usuarioId);
+
+    @Query("""
+    SELECT DISTINCT c FROM Compra c
+    LEFT JOIN FETCH c.detalles dc
+    LEFT JOIN FETCH dc.tipoBoleto tb
+    LEFT JOIN FETCH tb.evento e
+    WHERE c.id = :compraId
+    AND c.usuario.id = :usuarioId
+    """)
+    Optional<Compra> buscarMiCompraConDetalles(@Param("compraId") Long compraId, @Param("usuarioId") Long usuarioId);
 }

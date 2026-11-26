@@ -401,41 +401,18 @@ public class CompraServiceImpl implements CompraService {
 
         Usuario usuario = currentUserService.obtenerUsuarioActual();
 
-        List<Compra> compras = compraRepository.findByUsuarioIdOrderByFechaCreacionDesc(usuario.getId());
-
-        return compras.stream()
-            .map(compra -> {
-
-                DetalleCompra primerDetalle = compra.getDetalles()
-                    .stream()
-                    .findFirst()
-                    .orElse(null);
-
-                String nombreEvento = primerDetalle != null
-                    ? primerDetalle.getTipoBoleto().getEvento().getNombre()
-                    : null;
-
-                Long eventoId = primerDetalle != null
-                    ? primerDetalle.getTipoBoleto().getEvento().getId()
-                    : null;
-
-                int cantidadBoletos = compra.getDetalles()
-                    .stream()
-                    .mapToInt(DetalleCompra::getCantidad)
-                    .sum();
-
-
-                return new CompraResumenResponse(
-                compra.getId(),
-                nombreEvento,
-                eventoId,
-                compra.getEstado(),
-                cantidadBoletos,
-                compra.getTotal(),
-                compra.getFechaCreacion(),
-                compra.getFechaExpiracionReserva()
-                );
-            })
+        return compraRepository.findResumenByUsuarioId(usuario.getId())
+            .stream()
+            .map(resumen -> new CompraResumenResponse(
+                resumen.getCompraId(),
+                resumen.getNombreEvento(),
+                resumen.getEventoId(),
+                resumen.getEstado(),
+                resumen.getCantidadBoletos().intValue(),
+                resumen.getTotal(),
+                resumen.getFechaReserva(),
+                resumen.getFechaExpiracion()
+            ))
             .toList();
     }
 
@@ -446,33 +423,31 @@ public class CompraServiceImpl implements CompraService {
 
         Usuario usuario = currentUserService.obtenerUsuarioActual();
 
-        Compra compra = compraRepository.buscarMiCompra(compraId, usuario.getId())
+        Compra compra = compraRepository.buscarMiCompraConDetalles(compraId, usuario.getId())
             .orElseThrow(() -> new CompraNoEncontradaException());
 
-        String nombreEvento = compra.getDetalles().stream()
-            .map(detalle -> detalle.getTipoBoleto().getEvento().getNombre())
+        Evento evento = compra.getDetalles().stream()
+            .map(detalle -> detalle.getTipoBoleto().getEvento())
             .findFirst()
             .orElse(null);
 
-        Long eventoId = compra.getDetalles().stream()
-            .map(detalle -> detalle.getTipoBoleto().getEvento().getId())
-            .findFirst()
-            .orElse(null);
+        String nombreEvento = evento != null ? evento.getNombre() : null;
+        Long eventoId = evento != null ? evento.getId() : null;
 
         int cantidadBoletos = compra.getDetalles().stream()
             .mapToInt(DetalleCompra::getCantidad)
             .sum();
 
-        List<BoletoDetalleResponse> boletos = compra.getDetalles().stream()
-            .flatMap(detalle -> detalle.getBoletos().stream()
-                .map(boleto -> new BoletoDetalleResponse(
-                    boleto.getId(),
-                    detalle.getTipoBoleto().getNombre(),
-                    boleto.getTitularNombre(),
-                    boleto.getFolio(),
-                    boleto.getEstado(),
-                    esDescargable(compra, detalle.getTipoBoleto().getEvento())
-                )))
+        List<BoletoDetalleResponse> boletos = boletoRepository.findDetallesByCompraId(compraId)
+            .stream()
+            .map(boleto -> new BoletoDetalleResponse(
+                boleto.getBoletoId(),
+                boleto.getTipoBoletoNombre(),
+                boleto.getTitularNombre(),
+                boleto.getFolio(),
+                boleto.getEstado(),
+                esDescargable(compra, evento)
+            ))
             .toList();
 
         return new CompraDetalleResponse(

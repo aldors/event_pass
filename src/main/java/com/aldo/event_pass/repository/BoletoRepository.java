@@ -1,5 +1,6 @@
 package com.aldo.event_pass.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -7,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.aldo.event_pass.dto.projection.BoletoDetalleProjection;
 import com.aldo.event_pass.entity.Boleto;
 
 public interface BoletoRepository extends JpaRepository<Boleto, Long> {
@@ -27,6 +29,19 @@ public interface BoletoRepository extends JpaRepository<Boleto, Long> {
     """)
     Long contarBoletosUsuarioPorEvento(Long usuarioId, Long eventoId);
     Optional<Boleto> findByCodigoQr(String codigoQr);
+
+    @Query("""
+    SELECT b.id AS boletoId,
+           tb.nombre AS tipoBoletoNombre,
+           b.titularNombre AS titularNombre,
+           b.folio AS folio,
+           b.estado AS estado
+    FROM Boleto b
+    JOIN b.detalleCompra dc
+    JOIN dc.tipoBoleto tb
+    WHERE dc.compra.id = :compraId
+    """)
+    List<BoletoDetalleProjection> findDetallesByCompraId(@Param("compraId") Long compraId);
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("""
