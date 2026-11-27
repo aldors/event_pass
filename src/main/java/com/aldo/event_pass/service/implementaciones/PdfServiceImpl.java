@@ -35,31 +35,35 @@ public class PdfServiceImpl implements PdfService {
 
     @Override
     public byte[] generarPdf(Boleto boleto) {
-        
+
+        Evento evento = boleto.getDetalleCompra().getTipoBoleto().getEvento();
+
+        TipoBoleto tipoBoleto = boleto.getDetalleCompra().getTipoBoleto();
+
+        //String urlVerificacion = baseUrl + "/boletos/verificar/" + boleto.getCodigoQr();
+        String urlVerificacion = baseUrl + "/verificar.html?codigoQr=" + boleto.getCodigoQr();
+
+        byte[] qrBytes = qrService.generarQr(urlVerificacion);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        Document document = new Document(
+                        PageSize.A4,
+                        50,
+                        50,
+                        50,
+                        50
+                );
+
+        boolean documentoAbierto = false;
+
         try {
-
-            Evento evento = boleto.getDetalleCompra().getTipoBoleto().getEvento();
-            
-            TipoBoleto tipoBoleto = boleto.getDetalleCompra().getTipoBoleto();
-
-            //String urlVerificacion = baseUrl + "/boletos/verificar/" + boleto.getCodigoQr();
-            String urlVerificacion = baseUrl + "/verificar.html?codigoQr=" + boleto.getCodigoQr();
-
-            byte[] qrBytes = qrService.generarQr(urlVerificacion);
-
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-            Document document = new Document(
-                            PageSize.A4,
-                            50,
-                            50,
-                            50,
-                            50
-                    );
 
             PdfWriter.getInstance(document, outputStream);
 
             document.open();
+
+            documentoAbierto = true;
 
             // -------------------------------------------------
             // Fuentes
@@ -188,10 +192,19 @@ public class PdfServiceImpl implements PdfService {
 
             document.close();
 
+            documentoAbierto = false;
+
             return outputStream.toByteArray();
 
         } catch (Exception e) {
             throw new GeneracionPdfException(e);
+        } finally {
+            if (documentoAbierto) {
+                try {
+                    document.close();
+                } catch (RuntimeException ignorado) {
+                }
+            }
         }
     }
 

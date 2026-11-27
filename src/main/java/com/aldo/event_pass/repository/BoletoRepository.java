@@ -31,6 +31,17 @@ public interface BoletoRepository extends JpaRepository<Boleto, Long> {
     Optional<Boleto> findByCodigoQr(String codigoQr);
 
     @Query("""
+    SELECT DISTINCT b FROM Boleto b
+    JOIN FETCH b.detalleCompra dc
+    JOIN FETCH dc.compra c
+    JOIN FETCH c.usuario u
+    JOIN FETCH dc.tipoBoleto tb
+    JOIN FETCH tb.evento e
+    WHERE b.id = :id
+    """)
+    Optional<Boleto> findByIdForPdf(@Param("id") Long id);
+
+    @Query("""
     SELECT b.id AS boletoId,
            tb.nombre AS tipoBoletoNombre,
            b.titularNombre AS titularNombre,

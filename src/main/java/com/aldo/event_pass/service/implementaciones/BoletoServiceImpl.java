@@ -83,12 +83,11 @@ public class BoletoServiceImpl implements BoletoService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public byte[] generarPdf(Long boletoId) {
         
         Usuario usuario = currentUserService.obtenerUsuarioActual();
 
-        Boleto boleto = boletoRepository.findById(boletoId)
+        Boleto boleto = boletoRepository.findByIdForPdf(boletoId)
             .orElseThrow(() -> new BoletoNoEncontradoException());
 
         Compra compra = boleto.getDetalleCompra().getCompra();
