@@ -21,6 +21,6 @@ public class BoletoDetalleResponse {
     private String folio;
     @Schema(description = "Estado del boleto", example = "ACTIVO")
     private EstadoBoleto estado;
-    @Schema(description = "PDF descargable si la compra está PAGADA y el estado efectivo del evento no es CANCELADO ni FINALIZADO (INICIADO permitido); el endpoint exige ser el dueño", example = "true")
+    @Schema(description = "PDF descargable si la compra está PAGADA, el boleto está ACTIVO y el estado efectivo del evento es PUBLICADO o INICIADO; el endpoint exige ser el dueño", example = "true")
     private boolean descargable;
 }

@@ -48,6 +48,7 @@ import com.aldo.event_pass.exception.ReservarBoletosEnEventosPublicadosException
 import com.aldo.event_pass.exception.StripeNoDisponibleException;
 import com.aldo.event_pass.exception.TipoBoletoInexistenteException;
 import com.aldo.event_pass.exception.UsuarioNoEncontradoException;
+import com.aldo.event_pass.support.BoletoValidezResolver;
 import com.aldo.event_pass.support.EventoEstadoResolver;
 import com.aldo.event_pass.repository.BoletoRepository;
 import com.aldo.event_pass.repository.CompraRepository;
@@ -417,7 +418,7 @@ public class CompraServiceImpl implements CompraService {
                 boleto.getTitularNombre(),
                 boleto.getFolio(),
                 boleto.getEstado(),
-                esDescargable(compra, evento)
+                BoletoValidezResolver.esValido(compra, evento, boleto.getEstado())
             ))
             .toList();
 
@@ -479,24 +480,4 @@ public class CompraServiceImpl implements CompraService {
         }
     }
 
-    /*
-     * Replica las reglas de BoletoServiceImpl.generarPdf sin lanzar:
-     * compra pagada y evento vigente (no cancelado/finalizado).
-     */
-    private boolean esDescargable(Compra compra, Evento evento) {
-
-        if (compra.getEstado() != EstadoCompra.PAGADA) {
-            return false;
-        }
-
-        EstadoEvento estadoEfectivo = EventoEstadoResolver.estadoEfectivo(evento);
-        
-        if (estadoEfectivo == EstadoEvento.CANCELADO || estadoEfectivo == EstadoEvento.FINALIZADO) {
-            return false;
-        }
-
-        return true;
-    }
-    
-    
 }
