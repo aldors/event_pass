@@ -1,6 +1,17 @@
 import { API_BASE_URL, REQUEST_TIMEOUT_MS, STORAGE_KEYS } from "./config.js";
 import { obtenerTituloError } from "./utils.js";
 
+export const AUTH_REQUIRED_EVENT = "auth:required";
+
+const ENDPOINTS_SIN_REFRESH = new Set([
+    "/auth/login",
+    "/auth/registro",
+    "/auth/refresh-token",
+    "/auth/logout"
+]);
+
+let refreshEnCurso = null;
+
 export class ApiError extends Error {
     constructor(message, { status = 0, data = null } = {}) {
         super(message);
@@ -40,32 +51,37 @@ async function parseJsonSafe(response) {
     }
 }
 
-export async function apiFetch(path, { method = "GET", body, auth = false, timeoutMs = REQUEST_TIMEOUT_MS } = {}) {
+export async function apiFetch(path, options = {}) {
+    return ejecutarApiFetch(path, options, false);
+}
+
+async function ejecutarApiFetch(
+    path,
+    { method = "GET", body, auth = false, timeoutMs = REQUEST_TIMEOUT_MS } = {},
+    reintentando = false
+) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    let data;
+    let errorHttp = null;
 
     try {
-        const headers = buildHeaders({ body, auth });
-
         const response = await fetch(`${API_BASE_URL}${path}`, {
             method,
-            headers,
+            headers: buildHeaders({ body, auth }),
             body: body !== undefined ? JSON.stringify(body) : undefined,
             signal: controller.signal
         });
 
-        const data = await parseJsonSafe(response);
+        data = await parseJsonSafe(response);
 
         if (!response.ok) {
-            throw new ApiError(obtenerTituloError(`Error ${response.status}`), {
+            errorHttp = new ApiError(obtenerTituloError(`Error ${response.status}`), {
                 status: response.status,
                 data
             });
         }
-
-        return data;
     } catch (error) {
-        if (error instanceof ApiError) throw error;
         if (error?.name === "AbortError") {
             throw new ApiError("La petición tardó demasiado. Intenta de nuevo.", { status: 0 });
         }
@@ -73,6 +89,57 @@ export async function apiFetch(path, { method = "GET", body, auth = false, timeo
     } finally {
         clearTimeout(timeoutId);
     }
+
+    if (!errorHttp) return data;
+
+    if (errorHttp.status === 401 && auth && !reintentando && debeRenovarToken(path)) {
+        return reintentarConTokenRenovado(
+            path,
+            { method, body, auth, timeoutMs },
+            errorHttp
+        );
+    }
+
+    throw errorHttp;
+}
+
+function debeRenovarToken(path) {
+    return !ENDPOINTS_SIN_REFRESH.has((path ?? "").split("?")[0]);
+}
+
+async function reintentarConTokenRenovado(path, options, errorOriginal) {
+    const renovado = await renovarToken();
+
+    if (!renovado) {
+        notificarSesionInvalida();
+        throw errorOriginal;
+    }
+
+    try {
+        return await ejecutarApiFetch(path, options, true);
+    } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+            notificarSesionInvalida();
+        }
+        throw error;
+    }
+}
+
+function renovarToken() {
+    if (!refreshEnCurso) {
+        refreshEnCurso = refreshTokens()
+            .finally(() => {
+                refreshEnCurso = null;
+            });
+    }
+
+    return refreshEnCurso;
+}
+
+function notificarSesionInvalida() {
+    if (!getAccessToken() && !getRefreshToken()) return;
+    clearTokens();
+    window.dispatchEvent(new CustomEvent(AUTH_REQUIRED_EVENT));
 }
 
 
@@ -122,6 +189,7 @@ export async function descargarPdf(path, { timeoutMs = 15000 } = {}) {
             if (renovado) {
                 return await descargarPdfInterno(path, timeoutMs);
             }
+            notificarSesionInvalida();
         }
         throw error;
     }

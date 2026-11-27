@@ -4,12 +4,12 @@ import {
     getRefreshToken,
     setTokens,
     clearTokens,
-    refreshTokens,
-    ApiError
+    ApiError,
+    AUTH_REQUIRED_EVENT
 } from "./api.js";
 import { setButtonLoading, obtenerListaErrores, agregarDetalleErrores } from "./utils.js";
 
-export const AUTH_REQUIRED_EVENT = "auth:required";
+export { AUTH_REQUIRED_EVENT };
 export const AUTH_CHANGED_EVENT = "auth:changed";
 
 export function obtenerPermisos(usuario) {
@@ -87,24 +87,8 @@ export async function inicializarSesion() {
         const usuario = await apiFetch("/auth/me", { auth: true });
         mostrarUsuarioAutenticado(usuario);
     } catch (error) {
-        if (error instanceof ApiError && error.status === 401) {
-            // Access expirado: intentar refresh una vez antes de cerrar sesión.
-            const renovado = await refreshTokens();
-            if (renovado) {
-                try {
-                    const usuario = await apiFetch("/auth/me", { auth: true });
-                    mostrarUsuarioAutenticado(usuario);
-                    return;
-                } catch {
-                    // cae al logout silencioso
-                }
-            }
-            clearTokens();
-            mostrarUsuarioNoAutenticado();
-            return;
-        }
-        // Sin red u otro error: NO borramos tokens, solo mostramos estado neutro.
         console.error("Error al verificar la sesión:", error);
+        clearTokens();
         mostrarUsuarioNoAutenticado();
     }
 }
