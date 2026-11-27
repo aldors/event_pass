@@ -31,7 +31,6 @@ const subtituloBoletos = document.getElementById("subtituloBoletos");
 
 let comprasInitDone = false;
 let pagoEnProceso = false;
-let confirmTimer = null;
 
 
 /* =========================
@@ -301,9 +300,10 @@ async function pagarCompra(compraId, totalTexto, boton) {
         boton.textContent = "⚠ Confirmar pago";
         boton.classList.add("btn-confirm");
 
-        clearTimeout(confirmTimer);
-        confirmTimer = setTimeout(() => {
+        clearTimeout(boton._confirmTimer);
+        boton._confirmTimer = setTimeout(() => {
             delete boton.dataset.confirm;
+            delete boton._confirmTimer;
             boton.classList.remove("btn-confirm");
             boton.textContent = boton.dataset.originalText ?? "Pagar ahora";
         }, 6000);
@@ -311,7 +311,8 @@ async function pagarCompra(compraId, totalTexto, boton) {
         return;
     }
 
-    clearTimeout(confirmTimer);
+    clearTimeout(boton._confirmTimer);
+    delete boton._confirmTimer;
     delete boton.dataset.confirm;
     boton.classList.remove("btn-confirm");
 

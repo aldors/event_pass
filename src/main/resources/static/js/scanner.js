@@ -19,26 +19,31 @@ let scannerActivo = false;
 let codigoQrActual = null;
 let puedeEscanear = false;
 
-const confirmacionesScanner = new Map();
+const confirmacionesScanner = new WeakMap();
 
-function confirmarAccionScanner(clave, boton, textoConfirmar) {
-    if (confirmacionesScanner.has(clave)) {
-        confirmacionesScanner.delete(clave);
+function confirmarAccionScanner(boton, textoConfirmar) {
+    if (!boton) return false;
+
+    const confirmacion = confirmacionesScanner.get(boton);
+
+    if (confirmacion) {
+        clearTimeout(confirmacion.timer);
+        confirmacionesScanner.delete(boton);
         return true;
     }
 
-    confirmacionesScanner.set(clave, true);
+    const textoOriginal = boton.textContent;
+    boton.textContent = textoConfirmar;
 
-    const textoOriginal = boton?.textContent;
-
-    if (boton) boton.textContent = textoConfirmar;
-
-    setTimeout(() => {
-        if (!confirmacionesScanner.delete(clave)) return;
-        if (boton?.isConnected && textoOriginal !== undefined) {
+    const timer = setTimeout(() => {
+        if (!confirmacionesScanner.has(boton)) return;
+        confirmacionesScanner.delete(boton);
+        if (boton.isConnected && textoOriginal !== undefined) {
             boton.textContent = textoOriginal;
         }
     }, 6000);
+
+    confirmacionesScanner.set(boton, { timer });
 
     return false;
 }
@@ -306,7 +311,7 @@ async function usarBoletoEscaneado() {
 
     const boton = document.getElementById("btnUsarBoleto");
 
-    if (!confirmarAccionScanner("usar-boleto", boton, "⚠ Confirmar uso")) {
+    if (!confirmarAccionScanner(boton, "⚠ Confirmar uso")) {
         return;
     }
 
