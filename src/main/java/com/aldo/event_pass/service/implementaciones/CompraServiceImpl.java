@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -46,6 +47,7 @@ import com.aldo.event_pass.exception.SesionDeCheckoutNoDevueltaException;
 import com.aldo.event_pass.exception.ReservarBoletosEnEventosPublicadosException;
 import com.aldo.event_pass.exception.StripeNoDisponibleException;
 import com.aldo.event_pass.exception.TipoBoletoInexistenteException;
+import com.aldo.event_pass.exception.UsuarioNoEncontradoException;
 import com.aldo.event_pass.support.EventoEstadoResolver;
 import com.aldo.event_pass.repository.BoletoRepository;
 import com.aldo.event_pass.repository.CompraRepository;
@@ -53,6 +55,7 @@ import com.aldo.event_pass.repository.DetalleCompraRepository;
 import com.aldo.event_pass.repository.EventoRepository;
 import com.aldo.event_pass.repository.PagoRepository;
 import com.aldo.event_pass.repository.TipoBoletoRepository;
+import com.aldo.event_pass.repository.UsuarioRepository;
 import com.aldo.event_pass.security.CurrentUserService;
 import com.aldo.event_pass.service.interfaces.CompraService;
 import com.stripe.StripeClient;
@@ -72,6 +75,7 @@ public class CompraServiceImpl implements CompraService {
     private final EventoRepository eventoRepository;
     private final BoletoRepository boletoRepository;
     private final TipoBoletoRepository tipoBoletoRepository;
+    private final UsuarioRepository usuarioRepository;
     private final DetalleCompraRepository detalleCompraRepository;
     private final CompraRepository compraRepository;
     private final PagoRepository pagoRepository;
@@ -92,7 +96,7 @@ public class CompraServiceImpl implements CompraService {
     @Transactional 
     public ReservaResponse reservarBoletos(ReservarBoletosRequest reservarBoletosRequest) {
 
-        Usuario usuario = currentUserService.obtenerUsuarioActual();
+        Usuario usuarioActual = currentUserService.obtenerUsuarioActual();
 
         Evento evento = eventoRepository.findById(reservarBoletosRequest.getEventoId())
             .orElseThrow(() -> new EventoNoEncontradoException());
@@ -107,15 +111,6 @@ public class CompraServiceImpl implements CompraService {
             throw new ReservarBoletosEnEventosPublicadosException();
         }
 
-        // Boletos que ya ha comprado este usuario en este evento
-        Long boletosActuales = boletoRepository.contarBoletosUsuarioPorEvento(usuario.getId(), evento.getId());
-
-        int boletosNuevos = reservarBoletosRequest.getBoletos().size();
-
-        if((boletosActuales + boletosNuevos) > evento.getMaxBoletosPorUsuario()){
-            throw new ExcederMaximosBoletosPorUsuarioException();
-        }
-
         // 1 = {titular1, titular2},
         // 2 = {titular3}
         Map<Long, List<BoletoReservaRequest>> boletosAgrupados = reservarBoletosRequest.getBoletos().stream()
@@ -123,14 +118,20 @@ public class CompraServiceImpl implements CompraService {
                 BoletoReservaRequest::getTipoBoletoId
             ));
 
-        // Ordena los ids de los boletos (key)
+        // Ordena los ids para adquirir los locks siempre en el mismo orden
         List<Long> ids = boletosAgrupados.keySet().stream().sorted().toList();
 
-       // Bloquea las filas donde TipoBoleto.id IN (ids) para evitar concurrencias
-        List<TipoBoleto> tiposBoleto = tipoBoletoRepository.buscarTodosParaReserva(ids);
+        // Serializa las reservas del mismo usuario antes de contar sus boletos
+        Usuario usuario = usuarioRepository.findByIdForUpdate(usuarioActual.getId())
+            .orElseThrow(() -> new UsuarioNoEncontradoException());
 
-        if(tiposBoleto.size() != boletosAgrupados.size()) {
-            throw new TipoBoletoInexistenteException();
+        List<TipoBoleto> tiposBoleto = new ArrayList<>();
+
+        for (Long id : ids) {
+            TipoBoleto tipoBoleto = tipoBoletoRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new TipoBoletoInexistenteException());
+
+            tiposBoleto.add(tipoBoleto);
         }
 
         Map<Long, TipoBoleto> tiposBoletoMap = tiposBoleto.stream()
@@ -138,6 +139,15 @@ public class CompraServiceImpl implements CompraService {
                     TipoBoleto::getId,
                     tipoBoleto -> tipoBoleto
             ));
+
+        // Revalida el máximo después de los locks para que el conteo sea estable
+        Long boletosActuales = boletoRepository.contarBoletosUsuarioPorEvento(usuario.getId(), evento.getId());
+
+        int boletosNuevos = reservarBoletosRequest.getBoletos().size();
+
+        if((boletosActuales + boletosNuevos) > evento.getMaxBoletosPorUsuario()){
+            throw new ExcederMaximosBoletosPorUsuarioException();
+        }
 
         Compra compra = new Compra();
         compra.setUsuario(usuario);

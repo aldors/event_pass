@@ -1,7 +1,6 @@
 package com.aldo.event_pass.repository;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -23,7 +22,7 @@ public interface TipoBoletoRepository extends JpaRepository<TipoBoleto, Long> {
     @Query("""
         SELECT tb
         FROM TipoBoleto tb
-        WHERE tb.id IN :ids
+        WHERE tb.id = :id
     """)
-    List<TipoBoleto> buscarTodosParaReserva(@Param("ids") Collection<Long> ids);
+    Optional<TipoBoleto> findByIdForUpdate(@Param("id") Long id);
 }
