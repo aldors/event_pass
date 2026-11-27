@@ -14,10 +14,12 @@ public class RegistroRequest {
     
     @Schema(description = "Nombre del usuario", example = "Aldo")
     @NotBlank(message = "El nombre es obligarorio")
+    @Size(max = 100, message = "El nombre no puede superar los 100 caracteres")
     private String nombre;
 
     @Schema(description = "Apellido del usuario", example = "Ruiz")
     @NotBlank(message = "El apellido es obligarorio")
+    @Size(max = 100, message = "El apellido no puede superar los 100 caracteres")
     private String apellido;
 
     @Schema(description = "Correo electrónico del usuario", example = "aldo@email.com", format = "email")
@@ -28,6 +30,6 @@ public class RegistroRequest {
 
     @Schema(description = "Contraseña del usuario", example = "secreto123")
     @NotBlank(message = "La contraseña es obligatoria")
-    @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres")
+    @Size(min = 6, max = 255, message = "La contraseña debe tener entre 6 y 255 caracteres")
     private String password;
 }

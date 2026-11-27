@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,5 +20,6 @@ public class BoletoReservaRequest {
 
     @Schema(description = "Nombre del titular del boleto", example = "Aldo Rojas")
     @NotBlank(message = "El titular es obligatorio")
+    @Size(max = 200, message = "El titular no puede superar los 200 caracteres")
     private String titular;
 }

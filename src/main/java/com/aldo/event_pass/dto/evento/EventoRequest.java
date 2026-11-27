@@ -8,6 +8,7 @@ import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,6 +19,7 @@ public class EventoRequest {
     
     @Schema(description = "Nombre del evento", example = "Concierto de Rock 2026")
     @NotBlank(message = "El nombre del evento es obligatorio")
+    @Size(max = 150, message = "El nombre del evento no puede superar los 150 caracteres")
     private String nombre;
 
     @Schema(description = "Descripción del evento", example = "Concierto en vivo con bandas invitadas")
@@ -36,6 +38,7 @@ public class EventoRequest {
 
     @Schema(description = "Ubicación del evento", example = "Auditorio Nacional, CDMX")
     @NotBlank(message = "La ubicación del evento es obligatoria")
+    @Size(max = 255, message = "La ubicación del evento no puede superar los 255 caracteres")
     private String ubicacion;
 
     @Schema(description = "Límite de boletos por usuario", example = "4")
