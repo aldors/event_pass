@@ -23,6 +23,7 @@ public class RegistroRequest {
     @Schema(description = "Correo electrónico del usuario", example = "aldo@email.com", format = "email")
     @NotBlank(message = "El correo electrónico es obligatorio")
     @Email(message = "El correo electrónico debe ser válido")
+    @Size(max = 150, message = "El correo electrónico no puede superar los 150 caracteres")
     private String email;
 
     @Schema(description = "Contraseña del usuario", example = "secreto123")

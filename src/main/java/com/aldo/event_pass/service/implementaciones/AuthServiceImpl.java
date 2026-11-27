@@ -109,7 +109,9 @@ public class AuthServiceImpl implements AuthService {
         RefreshToken refreshTokenEntity = refreshTokenRepository.findByToken(refreshTokenRequest.getRefreshToken())
             .orElseThrow(() -> new RefreshTokenNoEncontradoException());
 
-        if(refreshTokenEntity.getExpirationDate().isBefore(LocalDateTime.now())){
+        LocalDateTime expirationDate = refreshTokenEntity.getExpirationDate();
+
+        if(expirationDate == null || expirationDate.isBefore(LocalDateTime.now())){
             refreshTokenRepository.deleteByToken(refreshTokenRequest.getRefreshToken());
             throw new RefreshTokenExpiradoException();
         }
