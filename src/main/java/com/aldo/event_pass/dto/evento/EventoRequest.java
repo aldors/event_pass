@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -28,7 +27,7 @@ public class EventoRequest {
 
     @Schema(description = "Fecha y hora de inicio", example = "2026-12-20T19:00:00")
     @NotNull(message = "La fecha de inicio es obligatoria")
-    @FutureOrPresent(message = "La fecha de inicio debe ser actual o futura")
+    @Future(message = "La fecha de inicio debe ser futura")
     private LocalDateTime fechaInicio;
 
     @Schema(description = "Fecha y hora de fin", example = "2026-12-20T23:00:00")
